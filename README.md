@@ -1,3 +1,3 @@
-### Matrix Transformations Animator
+### Animated Matrices
 
-A program to animate matrix transformations using numpy, plotly, and dash.
+Allows visualization of matrices, helping grasp the concepts of linear algebra.
