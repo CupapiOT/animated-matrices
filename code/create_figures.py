@@ -1,8 +1,11 @@
 from plotly.graph_objects import Figure, Scatter
+from types import Vectors
+
+__all__ = ['create_2d_basis_vectors', 'create_figure']
 
 
 def create_2d_basis_vectors(
-        basis_vectors: dict[str, list[tuple[int, int] | str]]
+        basis_vectors: Vectors
         ):
     fig = Figure()
 
@@ -26,11 +29,12 @@ def create_2d_basis_vectors(
         name='j-hat'
     ))
 
-    update_fig_layout(fig)
+    fig = update_fig_layout(fig)
+    
     return fig
 
 
-def create_figure(vectors: dict) -> Figure:
+def create_figure(vectors: Vectors) -> Figure:
     fig = Figure()
 
     for name, ((x, y), color) in vectors.items():
@@ -44,11 +48,12 @@ def create_figure(vectors: dict) -> Figure:
             name=name
         ))
 
-    update_fig_layout(fig)
+    fig = update_fig_layout(fig)
+
     return fig
 
 
-def update_fig_layout(fig):
+def update_fig_layout(fig) -> Figure:
     fig.update_layout(
         title='Graph',
         xaxis_title='',
@@ -57,3 +62,4 @@ def update_fig_layout(fig):
         yaxis=dict(range=[-5, 5], scaleanchor='x'),
         showlegend=True
     )
+    return fig
