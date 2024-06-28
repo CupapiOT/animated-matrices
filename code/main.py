@@ -3,6 +3,7 @@ from dash import Dash, dcc, html
 from dash.dependencies import Input, Output, State
 from constants import *
 from create_figures import create_2d_basis_vectors, create_figure
+from project_types import *
 
 
 class MatrixTransformationsApp:
@@ -21,7 +22,7 @@ class MatrixTransformationsApp:
         self.app.layout = self.create_layout()
         self.register_callbacks()
 
-    def register_callbacks(self):
+    def register_callbacks(self) -> None:
         @self.app.callback(
             Output('graph', 'figure', allow_duplicate=True),
             Output('vector-store', 'data', allow_duplicate=True),
@@ -33,7 +34,14 @@ class MatrixTransformationsApp:
              State('new-vector-entry-name', 'value')],
             prevent_initial_call=True
         )
-        def add_vector(n_clicks, x_val, y_val, color, stored_vectors, name=''):
+        def add_vector(
+                n_clicks: int,
+                x_val: Number,
+                y_val: Number,
+                color: str,
+                stored_vectors: Vectors,
+                name: str
+        ) -> tuple:
             x, y = self.vector_getter(x_val, y_val)
             vector_name = name if name else (LOWER_LETTERS[n_clicks % 26 - 1])
             stored_vectors[vector_name] = [(x, y), color]
@@ -51,11 +59,17 @@ class MatrixTransformationsApp:
              ],
             prevent_initial_call=True
         )
-        def delete_vector(_, name, stored_vectors, old_stored_vectors):
+        def delete_vector(
+                _,
+                name: str,
+                stored_vectors: Vectors,
+                old_stored_vectors: list[Vectors]
+        ) -> tuple:
             if not name:
                 name = list(stored_vectors.keys())[-1]
             if name not in stored_vectors:
                 return create_figure(stored_vectors), stored_vectors
+
             del stored_vectors[name]
             old_stored_vectors.pop()
 
@@ -80,14 +94,13 @@ class MatrixTransformationsApp:
             prevent_initial_call=True
         )
         def add_matrix(
-                n_clicks,
-                a, b, c, d,
-                stored_matrices: dict,
-                stored_vectors: dict,
-                previous_vectors: list[dict],
-                name='',
-
-        ):
+                n_clicks: int,
+                a: Number, b: Number, c: Number, d: Number,
+                stored_matrices: MatrixDict,
+                stored_vectors: Vectors,
+                previous_vectors: list[Vectors],
+                name: str,
+        ) -> tuple:
             a, b, c, d = self.set_empty_matrix_inputs_to_zero(a, b, c, d)
 
             matrix = np.array([[a, b], [c, d]])
@@ -128,11 +141,11 @@ class MatrixTransformationsApp:
         )
         def undo_matrix(
                 _,
-                stored_matrices: dict,
-                stored_vectors: dict,
-                previous_vectors: list[dict],
-                undone_matrices: dict
-        ):
+                stored_matrices: MatrixDict,
+                stored_vectors: Vectors,
+                previous_vectors: list[Vectors],
+                undone_matrices: MatrixDict
+        ) -> tuple:
             if not stored_matrices:
                 return (stored_matrices,
                         '',
@@ -146,7 +159,10 @@ class MatrixTransformationsApp:
             if len(stored_vectors) > len(previous_vectors[-1]):
                 new_keys = set(stored_vectors) - (set(previous_vectors[-1]))
                 for key in new_keys:
-                    previous_vectors[-1][key] = stored_vectors[key]
+                    try:
+                        previous_vectors[-1][key] = stored_vectors[key]
+                    except np.linalg.LinAlgError:
+                        pass  # Not yet implemented, got distracted with types.
 
             last_matrix_name = list(stored_matrices.keys())[-1]
             undone_matrices[last_matrix_name] = stored_matrices.pop(
@@ -180,11 +196,11 @@ class MatrixTransformationsApp:
         )
         def redo_matrix(
                 _,
-                stored_matrices: dict,
-                stored_vectors: dict,
-                previous_vectors: list[dict],
-                undone_matrices: dict
-        ):
+                stored_matrices: MatrixDict,
+                stored_vectors: Vectors,
+                previous_vectors: list[Vectors],
+                undone_matrices: MatrixDict
+        ) -> tuple:
             if (not stored_matrices) and (not undone_matrices):
                 return (stored_matrices,
                         '',
@@ -228,7 +244,11 @@ class MatrixTransformationsApp:
              State('add-vector-button', 'n_clicks')],
             prevent_initial_call=True
         )
-        def change_vector_button_name(name_input, vectors, n_clicks):
+        def change_vector_button_name(
+                name_input: str,
+                vectors: Vectors,
+                n_clicks: int
+        ) -> str:
             names = [name for name in vectors]
             if (name_input in names
                     or LOWER_LETTERS[n_clicks % 26] in names):
@@ -236,7 +256,7 @@ class MatrixTransformationsApp:
             else:
                 return 'Add Vector'
 
-    def create_layout(self):
+    def create_layout(self) -> html.Div:
         return html.Div([
             html.H1('Matrix Visualizer'),
             html.Div([
@@ -457,7 +477,11 @@ class MatrixTransformationsApp:
                       'height': '500px'})
         ])
 
-    def vector_getter(self, x_val, y_val):
+    def vector_getter(
+            self,
+            x_val: Number,
+            y_val: Number
+    ) -> tuple[Number, Number]:
         try:
             x = float(x_val)
             y = float(y_val)
@@ -467,14 +491,17 @@ class MatrixTransformationsApp:
 
     def apply_inverse_matrix_to_vectors(
             self,
-            matrix: np.ndarray,
-            vectors: dict
-    ):
+            matrix: Matrix,
+            vectors: Vectors
+    ) -> Vectors:
         inverted_matrix = np.linalg.inv(matrix)
         return self.apply_matrix_to_vectors(inverted_matrix, vectors)
 
     @staticmethod
-    def apply_matrix_to_vectors(matrix: np.ndarray, vectors: dict):
+    def apply_matrix_to_vectors(
+            matrix: Matrix,
+            vectors: Vectors
+    ) -> Vectors:
         vector_list = [([x, y])
                        for _, ((x, y), _) in vectors.items()]
         transformed_vectors = [(matrix @ vector).tolist()
@@ -487,7 +514,12 @@ class MatrixTransformationsApp:
         return vectors
 
     @staticmethod
-    def set_empty_matrix_inputs_to_zero(a, b, c, d):
+    def set_empty_matrix_inputs_to_zero(
+            a: Number,
+            b: Number,
+            c: Number,
+            d: Number
+    ) -> tuple[Number, Number, Number, Number]:
         a = 0 if not a else a
         b = 0 if not b else b
         c = 0 if not c else c
@@ -495,7 +527,7 @@ class MatrixTransformationsApp:
         return a, b, c, d
 
 
-def main():
+def main() -> None:
     app = MatrixTransformationsApp(
         {'i-hat': [(1, 0), 'green'],
          'j-hat': [(0, 1), 'red']}
