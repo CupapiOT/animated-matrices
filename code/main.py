@@ -84,7 +84,7 @@ class MatrixTransformationsApp:
                 a, b, c, d,
                 stored_matrices: dict,
                 stored_vectors: dict,
-                previous_vectors: list,
+                previous_vectors: list[dict],
                 name='',
 
         ):
@@ -130,7 +130,7 @@ class MatrixTransformationsApp:
                 _,
                 stored_matrices: dict,
                 stored_vectors: dict,
-                previous_vectors: list,
+                previous_vectors: list[dict],
                 undone_matrices: dict
         ):
             if not stored_matrices:
@@ -141,9 +141,16 @@ class MatrixTransformationsApp:
                         previous_vectors,
                         undone_matrices)
 
+            # This is done so that it doesn't delete any new vectors that
+            # were made before the undoing.
+            if len(stored_vectors) > len(previous_vectors[-1]):
+                new_keys = set(stored_vectors) - (set(previous_vectors[-1]))
+                for key in new_keys:
+                    previous_vectors[-1][key] = stored_vectors[key]
+
             last_matrix_name = list(stored_matrices.keys())[-1]
             undone_matrices[last_matrix_name] = stored_matrices.pop(
-                last_matrix_name)
+                                                last_matrix_name)
             matrix_list = str({f'{name}': mat
                                for name, mat in stored_matrices.items()})
 
@@ -175,7 +182,7 @@ class MatrixTransformationsApp:
                 _,
                 stored_matrices: dict,
                 stored_vectors: dict,
-                previous_vectors: list,
+                previous_vectors: list[dict],
                 undone_matrices: dict
         ):
             if (not stored_matrices) and (not undone_matrices):
