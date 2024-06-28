@@ -112,8 +112,9 @@ class MatrixTransformationsApp:
 
             previous_vectors.append(stored_vectors.copy())
 
+            last_matrix = np.array(list(stored_matrices.values())[-1])
             new_vectors = self.apply_matrix_to_vectors(
-                np.array(list(stored_matrices.values())[-1]),
+                last_matrix,
                 stored_vectors
             )
 
@@ -131,11 +132,13 @@ class MatrixTransformationsApp:
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vectors-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
+            Output('output-logs', 'children'),
             [Input('undo-matrix-button', 'n_clicks'),
              State('matrix-store', 'data'),
              State('vector-store', 'data'),
              State('previous-vectors-store', 'data'),
              State('undone-matrices-store', 'data'),
+             State('output-logs', 'children'),
              ],
             prevent_initial_call=True
         )
@@ -144,7 +147,8 @@ class MatrixTransformationsApp:
                 stored_matrices: MatrixDict,
                 stored_vectors: Vectors,
                 previous_vectors: list[Vectors],
-                undone_matrices: MatrixDict
+                undone_matrices: MatrixDict,
+                output_logs: str
         ) -> tuple:
             if not stored_matrices:
                 return (stored_matrices,
@@ -152,17 +156,30 @@ class MatrixTransformationsApp:
                         create_figure(stored_vectors),
                         stored_vectors,
                         previous_vectors,
-                        undone_matrices)
+                        undone_matrices,
+                        output_logs)
 
             # This is done so that it doesn't delete any new vectors that
             # were made before the undoing.
             if len(stored_vectors) > len(previous_vectors[-1]):
                 new_keys = set(stored_vectors) - (set(previous_vectors[-1]))
-                for key in new_keys:
-                    try:
-                        previous_vectors[-1][key] = stored_vectors[key]
-                    except np.linalg.LinAlgError:
-                        pass  # Not yet implemented, got distracted with types.
+                new_vector_dict = {key: stored_vectors[key]
+                                   for key in new_keys}
+                try:
+                    last_matrix = np.array(list(stored_matrices.values())[-1])
+                    inverted_new_vectors = (
+                        self.apply_inverse_matrix_to_vectors(
+                            last_matrix,
+                            new_vector_dict
+                        )
+                    )
+                    previous_vectors[-1].update(inverted_new_vectors)
+                except np.linalg.LinAlgError:
+                    previous_vectors[-1].update(new_vector_dict)
+                    output_logs += (f'Newly added vector(s) {list(new_keys)} '
+                                    f'were not changed due to how the '
+                                    f'previous matrix was unable to be '
+                                    f'inverted.')
 
             last_matrix_name = list(stored_matrices.keys())[-1]
             undone_matrices[last_matrix_name] = stored_matrices.pop(
@@ -177,7 +194,8 @@ class MatrixTransformationsApp:
                     create_figure(restored_vectors),
                     restored_vectors,
                     previous_vectors,
-                    undone_matrices)
+                    undone_matrices,
+                    output_logs)
 
         @self.app.callback(
             Output('matrix-store', 'data'),
@@ -471,7 +489,13 @@ class MatrixTransformationsApp:
             ], style={'display': 'flex', 'flexDirection': 'row'}),
             html.Div([
                 html.Label('List of Matrices', style={'marginBottom': '10px'}),
-                html.Label('', id='matrix-list')
+                html.Label('', id='matrix-list'),
+                html.Br(),
+                html.Br(),
+                html.Br(),
+                html.Br(),
+                html.Label('Recent Logs:', style={'marginBottom': '10px'}),
+                html.Label('', id='output-logs'),
             ], style={'display': 'flex',
                       'flexDirection': 'column',
                       'height': '500px'})
@@ -494,6 +518,13 @@ class MatrixTransformationsApp:
             matrix: Matrix,
             vectors: Vectors
     ) -> Vectors:
+        """
+
+        :param matrix: This should NOT be an inverse matrix, as the
+        function is the one that's supposed to invert it.
+        :param vectors:
+        :return: Vectors
+        """
         inverted_matrix = np.linalg.inv(matrix)
         return self.apply_matrix_to_vectors(inverted_matrix, vectors)
 
