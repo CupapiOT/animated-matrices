@@ -1,5 +1,5 @@
 from plotly.graph_objects import Figure, Scatter
-from types import Vectors
+from project_types import Vectors
 
 __all__ = ['create_2d_basis_vectors', 'create_figure']
 
