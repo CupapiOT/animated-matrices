@@ -29,8 +29,8 @@ def create_2d_basis_vectors(
         name='j-hat'
     ))
 
-    fig = update_fig_layout(fig)
-    
+    update_fig_layout(fig)
+
     return fig
 
 
@@ -48,12 +48,12 @@ def create_figure(vectors: Vectors) -> Figure:
             name=name
         ))
 
-    fig = update_fig_layout(fig)
+    update_fig_layout(fig)
 
     return fig
 
 
-def update_fig_layout(fig) -> Figure:
+def update_fig_layout(fig) -> None:
     fig.update_layout(
         title='Graph',
         xaxis_title='',
@@ -62,4 +62,3 @@ def update_fig_layout(fig) -> Figure:
         yaxis=dict(range=[-5, 5], scaleanchor='x'),
         showlegend=True
     )
-    return fig
