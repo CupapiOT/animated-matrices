@@ -26,27 +26,59 @@ class MatrixTransformationsApp:
         @self.app.callback(
             Output('graph', 'figure', allow_duplicate=True),
             Output('vector-store', 'data', allow_duplicate=True),
+            Output('previous-vectors-store', 'data', allow_duplicate=True),
+            Output('output-logs', 'children', allow_duplicate=True),
             [Input('add-vector-button', 'n_clicks'),
              State('vector-entry-1', 'value'),
              State('vector-entry-2', 'value'),
              State('vector-entry-color', 'value'),
              State('vector-store', 'data'),
-             State('new-vector-entry-name', 'value')],
+             State('new-vector-entry-name', 'value'),
+             State('previous-vectors-store', 'data'),
+             State('matrix-store', 'data'),
+             State('output-logs', 'children')
+             ],
             prevent_initial_call=True
         )
-        def add_vector(
+        def add_or_edit_vector(
                 n_clicks: int,
                 x_val: Number,
                 y_val: Number,
                 color: str,
                 stored_vectors: Vectors,
-                name: str
+                name: str,
+                old_stored_vectors: list[Vectors],
+                stored_matrices: MatrixDict,
+                output_logs: str
         ) -> tuple:
             x, y = self.vector_getter(x_val, y_val)
             vector_name = name if name else (LOWER_LETTERS[n_clicks % 26 - 1])
             stored_vectors[vector_name] = [(x, y), color]
 
-            return create_figure(stored_vectors), stored_vectors
+            editing_vector_in_old_stored_vectors = (
+                    old_stored_vectors and
+                    (vector_name in old_stored_vectors[-1])
+            )
+            if editing_vector_in_old_stored_vectors:
+                most_recent_matrix = np.array(list(stored_matrices.values())
+                                              [-1])
+                try:
+                    inverted_vector = self.apply_inverse_matrix_to_vectors(
+                        most_recent_matrix,
+                        {vector_name: [(x, y), color]}
+                    )
+                    old_stored_vectors[-1].update(inverted_vector)
+                except np.linalg.LinAlgError:
+                    old_stored_vectors[-1][vector_name] = [(x, y), color]
+                    output_logs += (f'Newly edited vector ({vector_name}) '
+                                    f'was unable to be properly shown before '
+                                    f'the current matrix was applied due to '
+                                    f'the current matrix having no inverse. ')
+
+            return (create_figure(stored_vectors),
+                    stored_vectors,
+                    old_stored_vectors,
+                    output_logs)
 
         @self.app.callback(
             Output('graph', 'figure', allow_duplicate=True),
@@ -112,9 +144,9 @@ class MatrixTransformationsApp:
 
             previous_vectors.append(stored_vectors.copy())
 
-            last_matrix = np.array(list(stored_matrices.values())[-1])
+            most_recent_matrix = np.array(list(stored_matrices.values())[-1])
             new_vectors = self.apply_matrix_to_vectors(
-                last_matrix,
+                most_recent_matrix,
                 stored_vectors
             )
 
@@ -166,10 +198,11 @@ class MatrixTransformationsApp:
                 new_vector_dict = {key: stored_vectors[key]
                                    for key in new_keys}
                 try:
-                    last_matrix = np.array(list(stored_matrices.values())[-1])
+                    most_recent_matrix = np.array(list(stored_matrices.values()
+                                                       )[-1])
                     inverted_new_vectors = (
                         self.apply_inverse_matrix_to_vectors(
-                            last_matrix,
+                            most_recent_matrix,
                             new_vector_dict
                         )
                     )
@@ -243,8 +276,10 @@ class MatrixTransformationsApp:
 
             previous_vectors.append(stored_vectors.copy())
 
+            most_recent_matrix = np.array(stored_matrices[
+                                          last_undone_matrix_name])
             restored_vectors = self.apply_matrix_to_vectors(
-                np.array(stored_matrices[last_undone_matrix_name]),
+                most_recent_matrix,
                 stored_vectors
             )
 
