@@ -20,10 +20,69 @@ class MatrixTransformationsApp:
 
         self.BASIS_VECTORS = basis_vectors
 
-        self.app.layout = self.create_layout()
-        self.register_callbacks()
+        self.app.layout = self._create_layout()
+        self._register_callbacks()
 
-    def register_callbacks(self) -> None:
+    def _handle_newly_added_vectors(
+            self,
+            stored_vectors: Vectors,
+            previous_vectors: list[Vectors],
+            inverse_matrix: Matrix | None
+    ) -> tuple[list[Vectors], str]:
+        """Only used within the undo_matrix function, which is defined
+        in `self.register_callback`."""
+        new_output_log = ''
+        if len(stored_vectors) > len(previous_vectors[-1]):
+            new_keys = set(stored_vectors) - (set(previous_vectors[-1]))
+            new_vector_dict = {key: stored_vectors[key]
+                               for key in new_keys}
+            if inverse_matrix is not None:
+                inverted_new_vectors = self.apply_matrix_to_vectors(
+                    inverse_matrix,
+                    new_vector_dict
+                )
+                previous_vectors[-1].update(inverted_new_vectors)
+            else:
+                previous_vectors[-1].update(new_vector_dict)
+                new_output_log = (
+                    f'Newly added vector(s) {list(new_keys)} were not '
+                    f'changed due to how the previous matrix was unable '
+                    f'to be inverted. '
+                )
+
+        return previous_vectors, new_output_log
+
+    def _handle_unupdated_vectors(
+            self,
+            stored_vectors: Vectors,
+            previous_vectors: list[Vectors],
+            inverse_matrix: Matrix | None
+    ) -> tuple[list[Vectors], str]:
+        """Only used within the undo_matrix function, which is defined
+        in `self.register_callback`."""
+        new_output_log = ''
+        for key, vector in stored_vectors.items():
+            if vector == previous_vectors[-1][key]:
+                continue
+            if inverse_matrix is not None:
+                inverted_edited_vector = (
+                    self.apply_matrix_to_vectors(
+                        inverse_matrix,
+                        {key: vector}
+                    ))
+                previous_vectors[-1].update(inverted_edited_vector)
+            else:
+                previous_vectors[-1][key] = vector
+                new_output_log = (
+                    f'Newly edited vector ({key}) '
+                    f'was unable to be properly shown before '
+                    f'the undone matrix was applied due to '
+                    f'the undone matrix having no inverse. '
+                )
+
+        return previous_vectors, new_output_log
+
+    def _register_callbacks(self) -> None:
         @self.app.callback(
             Output('graph', 'figure', allow_duplicate=True),
             Output('vector-store', 'data', allow_duplicate=True),
@@ -44,7 +103,7 @@ class MatrixTransformationsApp:
                 stored_vectors: Vectors,
                 name: str
         ) -> tuple:
-            x, y = self.vector_getter(x_val, y_val)
+            x, y = self._vector_getter(x_val, y_val)
             vector_name = name if name else (LOWER_LETTERS[n_clicks % 26 - 1])
             stored_vectors[vector_name] = [(x, y), color]
 
@@ -104,7 +163,7 @@ class MatrixTransformationsApp:
                 previous_vectors: list[Vectors],
                 name: str,
         ) -> tuple:
-            a, b, c, d = self.set_empty_matrix_inputs_to_zero(a, b, c, d)
+            a, b, c, d = self._set_empty_matrix_inputs_to_zero(a, b, c, d)
 
             matrix = np.array([[a, b], [c, d]])
             matrix_name = name if name else UPPER_LETTERS[n_clicks % 26 - 1]
@@ -170,43 +229,22 @@ class MatrixTransformationsApp:
 
             # This is done so that it doesn't delete any new vectors that
             # were made before the undoing.
-            if len(stored_vectors) > len(previous_vectors[-1]):
-                new_keys = set(stored_vectors) - (set(previous_vectors[-1]))
-                new_vector_dict = {key: stored_vectors[key]
-                                   for key in new_keys}
-                if inverse_matrix is not None:
-                    inverted_new_vectors = self.apply_matrix_to_vectors(
-                        inverse_matrix,
-                        new_vector_dict
-                    )
-                    previous_vectors[-1].update(inverted_new_vectors)
-                else:
-                    previous_vectors[-1].update(new_vector_dict)
-                    new_output_logs += (
-                        f'Newly added vector(s) {list(new_keys)} were not '
-                        f'changed due to how the previous matrix was unable '
-                        f'to be inverted. '
-                    )
+            previous_vectors, new_output_log = (
+                self._handle_newly_added_vectors(
+                    stored_vectors,
+                    previous_vectors,
+                    inverse_matrix
+                ))
+            new_output_logs += new_output_log
 
-            # This is done so that any newly edited vectors are kept
+            # This is done so that any recently edited vectors are kept
             # visually consistent after the undo.
-            for key, vector in stored_vectors.items():
-                if vector != previous_vectors[-1][key]:
-                    if inverse_matrix is not None:
-                        inverted_edited_vector = (
-                            self.apply_matrix_to_vectors(
-                                inverse_matrix,
-                                {key: vector}
-                            ))
-                        previous_vectors[-1].update(inverted_edited_vector)
-                    else:
-                        previous_vectors[-1][key] = vector
-                        new_output_logs += (
-                            f'Newly edited vector ({key}) '
-                            f'was unable to be properly shown before '
-                            f'the undone matrix was applied due to '
-                            f'the undone matrix having no inverse. '
-                        )
+            previous_vectors, new_output_log = self._handle_unupdated_vectors(
+                stored_vectors,
+                previous_vectors,
+                inverse_matrix
+            )
+            new_output_logs += new_output_log
 
             undone_matrices[last_matrix_name] = stored_matrices.pop(
                 last_matrix_name)
@@ -290,7 +328,7 @@ class MatrixTransformationsApp:
              State('add-vector-button', 'n_clicks')],
             prevent_initial_call=True
         )
-        def change_vector_button_name(
+        def _change_vector_button_name(
                 name_input: str,
                 vectors: Vectors,
                 n_clicks: int
@@ -302,7 +340,7 @@ class MatrixTransformationsApp:
             else:
                 return 'Add Vector'
 
-    def create_layout(self) -> html.Div:
+    def _create_layout(self) -> html.Div:
         return html.Div([
             html.H1('Matrix Visualizer'),
             html.Div([
@@ -529,7 +567,7 @@ class MatrixTransformationsApp:
                       'height': '500px'})
         ])
 
-    def vector_getter(
+    def _vector_getter(
             self,
             x_val: Number,
             y_val: Number
@@ -558,7 +596,7 @@ class MatrixTransformationsApp:
         return vectors
 
     @staticmethod
-    def set_empty_matrix_inputs_to_zero(
+    def _set_empty_matrix_inputs_to_zero(
             a: Number,
             b: Number,
             c: Number,
