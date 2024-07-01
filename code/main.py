@@ -5,6 +5,7 @@ from constants import *
 from create_figures import create_2d_basis_vectors, create_figure
 from project_types import *
 from matrix_utils import safe_inverse
+from general_utils import set_nonetype_to_zero
 
 
 class MatrixTransformationsApp:
@@ -236,7 +237,7 @@ class MatrixTransformationsApp:
                 previous_vectors: list[Vectors],
                 name: str,
         ) -> tuple:
-            a, b, c, d = self._set_empty_matrix_inputs_to_zero(a, b, c, d)
+            a, b, c, d = set_nonetype_to_zero(a, b, c, d)
 
             matrix = np.array([[a, b], [c, d]])
             matrix_name = name if name else UPPER_LETTERS[n_clicks % 26 - 1]
@@ -661,19 +662,6 @@ class MatrixTransformationsApp:
             vectors[name] = [t_vector, color]
 
         return vectors
-
-    @staticmethod
-    def _set_empty_matrix_inputs_to_zero(
-            a: Number,
-            b: Number,
-            c: Number,
-            d: Number
-    ) -> tuple[Number, Number, Number, Number]:
-        a = 0 if not a else a
-        b = 0 if not b else b
-        c = 0 if not c else c
-        d = 0 if not d else d
-        return a, b, c, d
 
 
 def main() -> None:
