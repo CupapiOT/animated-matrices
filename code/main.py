@@ -151,6 +151,7 @@ class MatrixTransformationsApp:
                 reversed(previous_vectors.copy())
             )
             new_previous_vectors = most_to_least_recent_prev_vecs.copy()
+            previous_vectors_temp = None
             for vectors, (its_matrixs_name, its_matrix) in zip(
                     new_previous_vectors,
                     matrices.items()
@@ -159,14 +160,23 @@ class MatrixTransformationsApp:
                     break
                 inverse_matrix = safe_inverse(its_matrix)
                 if inverse_matrix is not None:
-                    edited_vector = np.array([x, y])
+                    edited_vector = np.array([x, y]) if (
+                        previous_vectors_temp is None) else (
+                        previous_vectors_temp)
                     inverted_edited_vector_vals = (
-                            inverse_matrix @ edited_vector).tolist()
-                    inverted_edited_vector = [inverted_edited_vector_vals,
-                                              color]
+                            inverse_matrix @ edited_vector)
+                    previous_vectors_temp = inverted_edited_vector_vals.copy()
+                    inverted_edited_vector = [
+                        inverted_edited_vector_vals.tolist(),
+                        color
+                    ]
                     vectors[vector_name] = inverted_edited_vector
                 else:
-                    vectors[vector_name] = [(x, y), color]
+                    edited_vector = [(x, y), color] if (
+                            previous_vectors_temp is None) else (
+                            previous_vectors_temp)
+                    vectors[vector_name] = edited_vector
+
                     new_output_logs += (
                         f'Edited vector "{vector_name}" was unable to be '
                         f'properly shown before the matrix '
@@ -635,8 +645,8 @@ class MatrixTransformationsApp:
                       'height': '500px'})
         ])
 
+    @staticmethod
     def _vector_getter(
-            self,
             x_val: Number,
             y_val: Number
     ) -> tuple[Number, Number]:
