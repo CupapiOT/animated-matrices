@@ -197,12 +197,14 @@ class MatrixTransformationsApp:
             if not name:
                 name = list(stored_vectors.keys())[-1]
             if name not in stored_vectors:
-                return create_figure(stored_vectors), stored_vectors
+                return (create_figure(stored_vectors),
+                        stored_vectors,
+                        previous_vectors)
 
             del stored_vectors[name]
             for vectors in previous_vectors:
                 try:
-                    vectors[name]
+                    del vectors[name]
                 except KeyError:  # Doesn't matter, just keep deleting.
                     continue
 
