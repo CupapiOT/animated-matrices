@@ -641,10 +641,9 @@ class MatrixTransformationsApp:
             y_val: Number
     ) -> tuple[Number, Number]:
         try:
-            x = float(x_val)
-            y = float(y_val)
+            x, y = map(float, set_nonetype_to_zero(x_val, y_val))
         except (ValueError, TypeError):
-            return self.BASIS_VECTORS
+            x, y = 0, 0
         return x, y
 
     @staticmethod
