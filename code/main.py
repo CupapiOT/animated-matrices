@@ -132,7 +132,6 @@ class MatrixTransformationsApp:
             x, y = self._vector_getter(x_val, y_val)
             vector_name = name if name else (LOWER_LETTERS[n_clicks % 26 - 1])
             stored_vectors[vector_name] = [[x, y], color]
-            print(f'{previous_vectors = }')
             if not previous_vectors:
                 return (create_figure(stored_vectors),
                         stored_vectors,
@@ -158,22 +157,21 @@ class MatrixTransformationsApp:
                 if vector_name not in vectors:
                     break
                 inverse_matrix = safe_inverse(its_matrix)
-                edited_vector = np.array([x, y])
                 if inverse_matrix is not None:
+                    edited_vector = np.array([x, y])
                     inverted_edited_vector_vals = (
                             inverse_matrix @ edited_vector).tolist()
                     inverted_edited_vector = [inverted_edited_vector_vals,
                                               color]
                     vectors[vector_name] = inverted_edited_vector
                 else:
-                    vectors[vector_name] = edited_vector
+                    vectors[vector_name] = [(x, y), color]
                     new_output_logs += (
                         f'Edited vector "{vector_name}" was unable to be '
                         f'properly shown before the matrix '
                         f'"{its_matrixs_name}" was applied due to that '
                         f'matrix being singular. '
                     )
-            print(f'{list(reversed(new_previous_vectors)) = }')
             return (create_figure(stored_vectors),
                     stored_vectors,
                     list(reversed(new_previous_vectors)),
