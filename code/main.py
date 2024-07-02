@@ -9,13 +9,6 @@ from general_utils import set_nonetype_to_zero
 
 
 class MatrixTransformationsApp:
-    matrix_entries = [
-        State('matrix-entry-1', 'value'),
-        State('matrix-entry-2', 'value'),
-        State('matrix-entry-3', 'value'),
-        State('matrix-entry-4', 'value')
-    ]
-
     def __init__(self, basis_vectors):
         self.app = Dash('Matrix Transformations')
 
@@ -234,7 +227,10 @@ class MatrixTransformationsApp:
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
             [Input('add-matrix-button', 'n_clicks'),
-             *self.matrix_entries,
+             State('matrix-entry-1', 'value'),
+             State('matrix-entry-2', 'value'),
+             State('matrix-entry-3', 'value'),
+             State('matrix-entry-4', 'value'),
              State('matrix-store', 'data'),
              State('vector-store', 'data'),
              State('previous-vector-store', 'data'),
@@ -637,10 +633,7 @@ class MatrixTransformationsApp:
             html.Div([
                 html.Label('List of Matrices', style={'marginBottom': '10px'}),
                 html.Label('', id='matrix-list'),
-                html.Br(),
-                html.Br(),
-                html.Br(),
-                html.Br(),
+                *([html.Br()] * 4),
                 html.Label('Recent Logs:', style={'marginBottom': '10px'}),
                 html.Label('', id='output-logs'),
             ], style={'display': 'flex',
