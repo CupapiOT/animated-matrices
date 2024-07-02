@@ -172,16 +172,23 @@ class MatrixTransformationsApp:
                     ]
                     vectors[vector_name] = inverted_edited_vector
                 else:
+                    if previous_vectors_temp is not None:
+                        previous_vectors_temp_vector = [
+                            previous_vectors_temp.tolist(),
+                            color
+                        ]
+                    else:
+                        previous_vectors_temp_vector = None
                     edited_vector = [(x, y), color] if (
-                            previous_vectors_temp is None) else (
-                            previous_vectors_temp)
+                            previous_vectors_temp_vector is None) else (
+                            previous_vectors_temp_vector)
                     vectors[vector_name] = edited_vector
 
                     new_output_logs += (
                         f'Edited vector "{vector_name}" was unable to be '
                         f'properly shown before the matrix '
-                        f'"{its_matrixs_name}" was applied due to that '
-                        f'matrix being singular. '
+                        f'"{its_matrixs_name}" was applied due to it being '
+                        f'singular. '
                     )
             return (create_figure(stored_vectors),
                     stored_vectors,
