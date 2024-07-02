@@ -30,7 +30,7 @@ class MatrixTransformationsApp:
             previous_vectors: list[Vectors],
             inverse_matrix: Matrix | None
     ) -> tuple[list[Vectors], str]:
-        """Only used within the undo_matrix function, which is defined
+        """Only used within the undo_matrix method, which is defined
         in `self.register_callback`."""
         if len(stored_vectors) <= len(previous_vectors[-1]):
             return previous_vectors, ''
@@ -56,72 +56,83 @@ class MatrixTransformationsApp:
 
         return new_previous_vectors, new_output_log
 
-    @staticmethod
-    def _handle_unupdated_vectors(
-            stored_matrices: MatrixDict,
-            vector_name: str,
-            x: Number,
-            y: Number,
-            color: str,
-            previous_vectors: list[Vectors],
-            output_logs: str
-    ) -> tuple[list[Vectors], str]:
-        """Only used within the add_or_edit_vector method, which is 
-        defined in `self.register_callback`.
-        """
+    def _register_callbacks(self) -> None:
+        def _vector_getter(
+                x_val: Number,
+                y_val: Number
+        ) -> tuple[Number, Number]:
+            try:
+                x, y = map(float, set_nonetype_to_zero(x_val, y_val))
+            except (ValueError, TypeError):
+                x, y = 0, 0
+            return x, y
 
-        new_output_logs = output_logs
-        most_to_least_recent_matrices = dict(
-            reversed(stored_matrices.items())
-        )
-        matrices = {name: np.array(mat)
-                    for name, mat in most_to_least_recent_matrices.items()}
-        most_to_least_recent_prev_vecs = list(
-            reversed(previous_vectors.copy())
-        )
-        new_previous_vectors = most_to_least_recent_prev_vecs.copy()
-        previous_vectors_temp = None
-        for vectors, (its_matrixs_name, its_matrix) in zip(
-                new_previous_vectors,
-                matrices.items()
-        ):
-            if vector_name not in vectors:
-                break
-            inverse_matrix = safe_inverse(its_matrix)
-            if inverse_matrix is not None:
-                edited_vector = np.array([x, y]) if (
-                        previous_vectors_temp is None) else (
-                    previous_vectors_temp)
-                inverted_edited_vector_vals = (
-                        inverse_matrix @ edited_vector)
-                previous_vectors_temp = inverted_edited_vector_vals.copy()
-                inverted_edited_vector = [
-                    inverted_edited_vector_vals.tolist(),
-                    color
-                ]
-                vectors[vector_name] = inverted_edited_vector
-            else:
-                if previous_vectors_temp is not None:
-                    previous_vectors_temp_vector = [
-                        previous_vectors_temp.tolist(),
+        def _update_all_previous_vectors(
+                stored_matrices: MatrixDict,
+                vector_name: str,
+                x: Number,
+                y: Number,
+                color: str,
+                previous_vectors: list[Vectors],
+                output_logs: str
+        ) -> tuple[list[Vectors], str]:
+            """Only used within the `add_or_edit_vector` method as a
+            place to refactor code from `add_or_edit_vector`, which is
+            defined in `self.register_callback`, directly below this
+            function.
+            """
+
+            new_output_logs = output_logs
+            most_to_least_recent_matrices = dict(
+                reversed(stored_matrices.items())
+            )
+            matrices = {name: np.array(mat)
+                        for name, mat in most_to_least_recent_matrices.items()}
+            most_to_least_recent_prev_vecs = list(
+                reversed(previous_vectors.copy())
+            )
+            new_previous_vectors = most_to_least_recent_prev_vecs.copy()
+            previous_vectors_temp = None
+            for vectors, (its_matrixs_name, its_matrix) in zip(
+                    new_previous_vectors,
+                    matrices.items()
+            ):
+                if vector_name not in vectors:
+                    break
+                inverse_matrix = safe_inverse(its_matrix)
+                if inverse_matrix is not None:
+                    edited_vector = np.array([x, y]) if (
+                            previous_vectors_temp is None) else (
+                        previous_vectors_temp)
+                    inverted_edited_vector_vals = (
+                            inverse_matrix @ edited_vector)
+                    previous_vectors_temp = inverted_edited_vector_vals.copy()
+                    inverted_edited_vector = [
+                        inverted_edited_vector_vals.tolist(),
                         color
                     ]
+                    vectors[vector_name] = inverted_edited_vector
                 else:
-                    previous_vectors_temp_vector = None
-                edited_vector = [(x, y), color] if (
-                        previous_vectors_temp_vector is None) else (
-                    previous_vectors_temp_vector)
-                vectors[vector_name] = edited_vector
+                    if previous_vectors_temp is not None:
+                        previous_vectors_temp_vector = [
+                            previous_vectors_temp.tolist(),
+                            color
+                        ]
+                    else:
+                        previous_vectors_temp_vector = None
+                    edited_vector = [(x, y), color] if (
+                            previous_vectors_temp_vector is None) else (
+                        previous_vectors_temp_vector)
+                    vectors[vector_name] = edited_vector
 
-                new_output_logs += (
-                    f'Edited vector "{vector_name}" was unable to be '
-                    f'properly shown before the matrix '
-                    f'"{its_matrixs_name}" was applied due to it being '
-                    f'singular. ')
+                    new_output_logs += (
+                        f'Edited vector "{vector_name}" was unable to be '
+                        f'properly shown before the matrix '
+                        f'"{its_matrixs_name}" was applied due to it being '
+                        f'singular. ')
 
-        return new_previous_vectors, new_output_logs
+            return new_previous_vectors, new_output_logs
 
-    def _register_callbacks(self) -> None:
         @self.app.callback(
             Output('graph', 'figure', allow_duplicate=True),
             Output('vector-store', 'data', allow_duplicate=True),
@@ -153,7 +164,7 @@ class MatrixTransformationsApp:
                 previous_vectors: list[Vectors],
                 output_logs: str
         ) -> tuple:
-            x, y = self._vector_getter(x_val, y_val)
+            x, y = _vector_getter(x_val, y_val)
             vector_name = name if name else (LOWER_LETTERS[n_clicks % 26 - 1])
             stored_vectors[vector_name] = [[x, y], color]
             if not previous_vectors:
@@ -165,7 +176,7 @@ class MatrixTransformationsApp:
             # This is done so that any recently edited vectors are kept
             # visually consistent after the undo.
             new_previous_vectors, new_output_logs = (
-                self._handle_unupdated_vectors(
+                _update_all_previous_vectors(
                     stored_matrices,
                     vector_name,
                     x,
@@ -636,17 +647,6 @@ class MatrixTransformationsApp:
                       'flexDirection': 'column',
                       'height': '500px'})
         ])
-
-    @staticmethod
-    def _vector_getter(
-            x_val: Number,
-            y_val: Number
-    ) -> tuple[Number, Number]:
-        try:
-            x, y = map(float, set_nonetype_to_zero(x_val, y_val))
-        except (ValueError, TypeError):
-            x, y = 0, 0
-        return x, y
 
     @staticmethod
     def apply_matrix_to_vectors(
