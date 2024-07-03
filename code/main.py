@@ -332,6 +332,18 @@ class MatrixTransformationsApp:
                         new_output_logs)
 
             new_name = "I_" + name
+            new_name_suffix = ''
+            for matrix_name in stored_matrices.keys():
+                if not matrix_name.startswith('I_'):
+                    continue
+                find_number = matrix_name.find('_', 2) + 1
+                if find_number > 0:
+                    inverse_matrix_number = int(matrix_name[find_number:]) + 1
+                    new_name_suffix = f'_{inverse_matrix_number}'
+                else:
+                    new_name_suffix = '_2'
+            new_name += new_name_suffix
+
             stored_matrices[new_name] = inverted_matrix.tolist()
             new_vectors = self.apply_matrix_to_vectors(
                 inverted_matrix,
