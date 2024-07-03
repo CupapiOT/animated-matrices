@@ -189,8 +189,11 @@ class MatrixTransformationsApp:
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             [Input('delete-vector-button', 'n_clicks'),
-             State('delete-vector-entry-name', 'value'),
-             State('vector-store', 'data'),
+             State('delete-vector-entry-name', 'value')
+            ],
+            # This time the separated list to indicate that the below
+            # is for not for the main inputs of the function.
+            [State('vector-store', 'data'),
              State('previous-vector-store', 'data')
              ],
             prevent_initial_call=True
@@ -230,8 +233,9 @@ class MatrixTransformationsApp:
              State('matrix-entry-1', 'value'),
              State('matrix-entry-2', 'value'),
              State('matrix-entry-3', 'value'),
-             State('matrix-entry-4', 'value'),
-             State('matrix-store', 'data'),
+             State('matrix-entry-4', 'value')
+             ],
+            [State('matrix-store', 'data'),
              State('vector-store', 'data'),
              State('previous-vector-store', 'data'),
              State('new-matrix-entry-name', 'value'),
@@ -269,6 +273,31 @@ class MatrixTransformationsApp:
                     new_vectors,
                     previous_vectors,
                     {})
+
+        @self.app.callback(
+            Output('matrix-store', 'data', allow_duplicate=True),
+            Output('matrix-list', 'children', allow_duplicate=True),
+            Output('graph', 'figure', allow_duplicate=True),
+            Output('vector-store', 'data', allow_duplicate=True),
+            Output('previous-vector-store', 'data', allow_duplicate=True),
+            Output('undone-matrices-store', 'data', allow_duplicate=True),
+            [Input('inverse-matrix-button', 'n_clicks'),
+             State('inverse-matrix-entry-name', 'value'),
+             ],
+            [State('matrix-store', 'data'),
+             State('vector-store', 'data'),
+             State('previous-vector-store', 'data'),
+             ],
+            prevent_initial_call=True
+        )
+        def apply_inverse(
+                _,
+                matrix_to_inverse: str,
+                stored_matrices: MatrixDict,
+                stored_vectors: Vectors,
+                previous_vectors: list[Vectors],
+        ):
+            pass
 
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
