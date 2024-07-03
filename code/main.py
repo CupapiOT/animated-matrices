@@ -302,11 +302,11 @@ class MatrixTransformationsApp:
                 undone_matrices: MatrixDict,
                 output_logs: str
         ):
+            matrix_list = str({f'{name}': mat
+                               for name, mat in stored_matrices.items()})
             new_output_logs = output_logs
             name = matrix_to_inverse if matrix_to_inverse is not None else ''
             if name not in stored_matrices:
-                matrix_list = str({f'{name}': mat
-                                   for name, mat in stored_matrices.items()})
                 new_output_logs += f'Matrix "{name}" does not exist. ' if (
                     stored_matrices) else 'No matrices exist. '
                 return (stored_matrices,
@@ -319,20 +319,27 @@ class MatrixTransformationsApp:
 
             selected_matrix = np.array(stored_matrices[name])
             inverted_matrix = safe_inverse(selected_matrix)
-            if inverted_matrix is not None:
-                new_name = "I_" + name
-                stored_matrices[new_name] = inverted_matrix.tolist()
-                matrix_list = str({f'{name}': mat
-                                   for name, mat in stored_matrices.items()})
-
-                new_vectors = self.apply_matrix_to_vectors(
-                    inverted_matrix,
-                    stored_vectors
+            if inverted_matrix is None:
+                new_output_logs += (
+                    f'Matrix "{name}" does not have an inverse. '
                 )
+                return (stored_matrices,
+                        matrix_list,
+                        create_figure(stored_vectors),
+                        stored_vectors,
+                        previous_vectors,
+                        undone_matrices,
+                        new_output_logs)
 
-                previous_vectors.append(stored_vectors.copy())
-            else:
-                raise NotImplementedError('WIP.')
+            new_name = "I_" + name
+            stored_matrices[new_name] = inverted_matrix.tolist()
+            new_vectors = self.apply_matrix_to_vectors(
+                inverted_matrix,
+                stored_vectors
+            )
+            previous_vectors.append(stored_vectors.copy())
+            matrix_list = str({f'{name}': mat
+                               for name, mat in stored_matrices.items()})
 
             return (stored_matrices,
                     matrix_list,
