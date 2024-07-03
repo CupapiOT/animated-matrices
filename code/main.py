@@ -281,23 +281,42 @@ class MatrixTransformationsApp:
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
+            Output('output-logs', 'children', allow_duplicate=True),
             [Input('inverse-matrix-button', 'n_clicks'),
              State('inverse-matrix-entry-name', 'value'),
              ],
             [State('matrix-store', 'data'),
              State('vector-store', 'data'),
              State('previous-vector-store', 'data'),
+             State('undone-matrices-store', 'data'),
+             State('output-logs', 'children')
              ],
             prevent_initial_call=True
         )
         def apply_inverse(
                 _,
-                matrix_to_inverse: str,
+                matrix_to_inverse: str | None,
                 stored_matrices: MatrixDict,
                 stored_vectors: Vectors,
                 previous_vectors: list[Vectors],
+                undone_matrices: MatrixDict,
+                output_logs: str
         ):
-            pass
+            new_output_logs = output_logs
+            name = matrix_to_inverse if matrix_to_inverse is not None else ''
+            if name not in stored_matrices:
+                matrix_list = str({f'{name}': mat
+                                   for name, mat in stored_matrices.items()})
+                new_output_logs += f'Matrix "{name}" does not exist. ' if (
+                    stored_matrices) else 'No matrices exist. '
+                return (stored_matrices,
+                        matrix_list,
+                        create_figure(stored_vectors),
+                        stored_vectors,
+                        previous_vectors,
+                        undone_matrices,
+                        new_output_logs)
+
 
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
