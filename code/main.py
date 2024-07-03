@@ -317,6 +317,31 @@ class MatrixTransformationsApp:
                         undone_matrices,
                         new_output_logs)
 
+            selected_matrix = np.array(stored_matrices[name])
+            inverted_matrix = safe_inverse(selected_matrix)
+            if inverted_matrix is not None:
+                new_name = "I_" + name
+                stored_matrices[new_name] = inverted_matrix.tolist()
+                matrix_list = str({f'{name}': mat
+                                   for name, mat in stored_matrices.items()})
+
+                new_vectors = self.apply_matrix_to_vectors(
+                    inverted_matrix,
+                    stored_vectors
+                )
+
+                previous_vectors.append(stored_vectors.copy())
+            else:
+                raise NotImplementedError('WIP.')
+
+            return (stored_matrices,
+                    matrix_list,
+                    create_figure(new_vectors),
+                    new_vectors,
+                    previous_vectors,
+                    {},
+                    new_output_logs)
+
 
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
