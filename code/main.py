@@ -1,6 +1,7 @@
 import numpy as np
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output, State
+import re
 from constants import *
 from create_figures import create_2d_basis_vectors, create_figure
 from project_types import *
@@ -332,17 +333,25 @@ class MatrixTransformationsApp:
                         new_output_logs)
 
             new_name = "I_" + name
-            new_name_suffix = ''
-            for matrix_name in stored_matrices.keys():
-                if not matrix_name.startswith('I_'):
-                    continue
-                find_number = matrix_name.find('_', 2) + 1
-                if find_number > 0:
-                    inverse_matrix_number = int(matrix_name[find_number:]) + 1
-                    new_name_suffix = f'_{inverse_matrix_number}'
-                else:
-                    new_name_suffix = '_2'
-            new_name += new_name_suffix
+            if new_name in stored_matrices:
+                existing_inverses = [
+                    key for key in stored_matrices.keys()
+                    if key.startswith(new_name)
+                ]
+                number_list = sorted([
+                    int(re.search(r'_(\d+)', inverse).group(1))
+                    for inverse in existing_inverses
+                    if re.search(r'_(\d+)', inverse)
+                ])
+                try:
+                    solution_to_number = next(
+                        (number_list[i] + 1 for i in range(len(number_list) - 1)
+                         if number_list[i + 1] != number_list[i] + 1),
+                        number_list[-1] + 1
+                    )
+                except IndexError:
+                    solution_to_number = 2
+                new_name += f'_{solution_to_number}'
 
             stored_matrices[new_name] = inverted_matrix.tolist()
             new_vectors = self.apply_matrix_to_vectors(
