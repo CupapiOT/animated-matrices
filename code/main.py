@@ -296,27 +296,27 @@ class MatrixTransformationsApp:
         )
         def apply_inverse(
                 _,
-                matrix_to_inverse: str | None,
+                matrix_to_invert: str | None,
                 stored_matrices: MatrixDict,
                 stored_vectors: Vectors,
                 previous_vectors: list[Vectors],
                 undone_matrices: MatrixDict,
                 output_logs: str
         ):
-            matrix_list = str({f'{name}': mat
-                               for name, mat in stored_matrices.items()})
+            everything_as_they_are = (
+                stored_matrices,
+                str({f'{name}': mat for name, mat in stored_matrices.items()}),
+                create_figure(stored_vectors),
+                stored_vectors,
+                previous_vectors,
+                undone_matrices,
+            )
             new_output_logs = output_logs
-            name = matrix_to_inverse if matrix_to_inverse is not None else ''
+            name = matrix_to_invert if matrix_to_invert is not None else ''
             if name not in stored_matrices:
                 new_output_logs += f'Matrix "{name}" does not exist. ' if (
                     stored_matrices) else 'No matrices exist. '
-                return (stored_matrices,
-                        matrix_list,
-                        create_figure(stored_vectors),
-                        stored_vectors,
-                        previous_vectors,
-                        undone_matrices,
-                        new_output_logs)
+                return everything_as_they_are + (new_output_logs,)
 
             selected_matrix = np.array(stored_matrices[name])
             inverted_matrix = safe_inverse(selected_matrix)
@@ -324,13 +324,7 @@ class MatrixTransformationsApp:
                 new_output_logs += (
                     f'Matrix "{name}" does not have an inverse. '
                 )
-                return (stored_matrices,
-                        matrix_list,
-                        create_figure(stored_vectors),
-                        stored_vectors,
-                        previous_vectors,
-                        undone_matrices,
-                        new_output_logs)
+                return everything_as_they_are + (new_output_logs,)
 
             new_name = "I_" + name
             if new_name in stored_matrices:
@@ -339,9 +333,9 @@ class MatrixTransformationsApp:
                     if key.startswith(new_name)
                 ]
                 number_list = sorted([
-                    int(re.search(r'_(\d+)', inverse).group(1))
+                    int(re.search(r'_(\d+)$', inverse).group(1))
                     for inverse in existing_inverses
-                    if re.search(r'_(\d+)', inverse)
+                    if re.search(r'_(\d+)$', inverse)
                 ])
                 try:
                     solution_to_number = next(
@@ -354,11 +348,11 @@ class MatrixTransformationsApp:
                 new_name += f'_{solution_to_number}'
 
             stored_matrices[new_name] = inverted_matrix.tolist()
+            previous_vectors.append(stored_vectors.copy())
             new_vectors = self.apply_matrix_to_vectors(
                 inverted_matrix,
                 stored_vectors
             )
-            previous_vectors.append(stored_vectors.copy())
             matrix_list = str({f'{name}': mat
                                for name, mat in stored_matrices.items()})
 
@@ -431,6 +425,7 @@ class MatrixTransformationsApp:
                                for name, mat in new_stored_matrices.items()})
 
             restored_vectors = new_previous_vectors.pop()
+
             return (new_stored_matrices,
                     matrix_list,
                     create_figure(restored_vectors),
@@ -747,16 +742,17 @@ class MatrixTransformationsApp:
             matrix: Matrix,
             vectors: Vectors
     ) -> Vectors:
-        vector_list = [([x, y])
-                       for _, ((x, y), _) in vectors.items()]
+        new_vectors = vectors.copy()
+        vector_list = [np.array([x, y])
+                       for _, ((x, y), _) in new_vectors.items()]
         transformed_vectors = [(matrix @ vector).tolist()
                                for vector in vector_list]
 
-        for (name, (_, color)), t_vector in zip(vectors.items(),
+        for (name, (_, color)), t_vector in zip(new_vectors.items(),
                                                 transformed_vectors):
-            vectors[name] = [t_vector, color]
+            new_vectors[name] = [t_vector, color]
 
-        return vectors
+        return new_vectors
 
 
 def main() -> None:
