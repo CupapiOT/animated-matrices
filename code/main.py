@@ -312,12 +312,18 @@ class MatrixTransformationsApp:
                 undone_matrices,
             )
             new_output_logs = output_logs
-            last_matrix_name = list(stored_matrices.keys())[-1] if (
-                stored_matrices) else None
+            if not stored_matrices:
+                new_output_logs += 'No matrices exist. '
+                return everything_as_they_are + (new_output_logs,)
+
+            non_inverse_matrices = [
+                key for key in stored_matrices.keys()
+                if not key.startswith('I_')
+            ]
+            last_matrix_name = non_inverse_matrices[-1]
             name = matrix_to_invert if matrix_to_invert else last_matrix_name
             if name not in stored_matrices:
-                new_output_logs += f'Matrix "{name}" does not exist. ' if (
-                    stored_matrices) else 'No matrices exist. '
+                new_output_logs += f'Matrix "{name}" does not exist. '
                 return everything_as_they_are + (new_output_logs,)
 
             selected_matrix = np.array(stored_matrices[name])
