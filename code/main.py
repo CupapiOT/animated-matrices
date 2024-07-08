@@ -312,7 +312,9 @@ class MatrixTransformationsApp:
                 undone_matrices,
             )
             new_output_logs = output_logs
-            name = matrix_to_invert if matrix_to_invert is not None else ''
+            last_matrix_name = list(stored_matrices.keys())[-1] if (
+                stored_matrices) else None
+            name = matrix_to_invert if matrix_to_invert else last_matrix_name
             if name not in stored_matrices:
                 new_output_logs += f'Matrix "{name}" does not exist. ' if (
                     stored_matrices) else 'No matrices exist. '
