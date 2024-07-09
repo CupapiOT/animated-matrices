@@ -351,7 +351,7 @@ class MatrixTransformationsApp:
                     if not key.startswith('I_')
                 ]
                 return non_inverse_matrices[-1] if (
-                    non_inverse_matrices) else None
+                    non_inverse_matrices) else tuple(stored_matrices_)[-1]
 
             everything_as_they_are = (
                 stored_matrices,
