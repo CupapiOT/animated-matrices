@@ -328,8 +328,8 @@ class MatrixTransformationsApp:
                 undone_matrices: MatrixDict,
                 output_logs: str
         ):
-            def validate_input(
-                    name: str | None, 
+            def _validate_input(
+                    name: str | None,
                     stored_matrices_: MatrixDict | tuple | list,
                     output_logs_: str
             ) -> tuple[bool, str]:
@@ -338,12 +338,12 @@ class MatrixTransformationsApp:
                     return False, output_logs_
                 if name and (name not in stored_matrices_):
                     output_logs_ += (f'Matrix "{matrix_to_invert}" does not '
-                                    f'exist. ')
+                                     f'exist. ')
                     return False, output_logs_
 
                 return True, output_logs_
 
-            def get_last_matrix_name(
+            def _get_last_matrix_name(
                     stored_matrices_: MatrixDict | tuple | list
             ) -> str:
                 non_inverse_matrices = [
@@ -362,21 +362,22 @@ class MatrixTransformationsApp:
                 undone_matrices,
             )
 
-            valid, new_output_logs = validate_input(name=matrix_to_invert,
-                                                    stored_matrices_=stored_matrices,
-                                                    output_logs_=output_logs)
+            valid, new_output_logs = _validate_input(
+                name=matrix_to_invert,
+                stored_matrices_=stored_matrices,
+                output_logs_=output_logs
+            )
             if not valid:
                 return everything_as_they_are + (new_output_logs,)
 
             name = matrix_to_invert if matrix_to_invert else (
-                get_last_matrix_name(stored_matrices))
+                _get_last_matrix_name(stored_matrices))
 
             selected_matrix = np.array(stored_matrices[name])
             inverted_matrix = safe_inverse(selected_matrix)
             if inverted_matrix is None:
-                new_output_logs += (
-                    f'Matrix "{name}" does not have an inverse. '
-                )
+                log = f'Matrix "{name}" does not have an inverse. '
+                new_output_logs += log
                 return everything_as_they_are + (new_output_logs,)
 
             new_name = _find_valid_inverse_name(
