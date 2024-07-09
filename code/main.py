@@ -191,7 +191,7 @@ class MatrixTransformationsApp:
             Output('previous-vector-store', 'data', allow_duplicate=True),
             [Input('delete-vector-button', 'n_clicks'),
              State('delete-vector-entry-name', 'value')
-            ],
+             ],
             # This time the separated list to indicate that the below
             # is for not for the main inputs of the function.
             [State('vector-store', 'data'),
@@ -275,6 +275,31 @@ class MatrixTransformationsApp:
                     previous_vectors,
                     {})
 
+        def _find_valid_inverse_name(name, name_list):
+            new_name = 'I_' + name
+            if new_name not in name_list:
+                return new_name
+
+            existing_inverses = [
+                key for key in name_list
+                if key.startswith(new_name)
+            ]
+            number_list = sorted([
+                int(re.search(r'_(\d+)$', inverse).group(1))
+                for inverse in existing_inverses
+                if re.search(r'_(\d+)$', inverse)
+            ])
+            try:
+                solution_to_number = next(
+                    (number_list[i] + 1 for i in range(len(number_list) - 1)
+                     if number_list[i + 1] != number_list[i] + 1),
+                    number_list[-1] + 1
+                )
+            except IndexError:
+                solution_to_number = 2
+            new_name += f'_{solution_to_number}'
+            return new_name
+
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
             Output('matrix-list', 'children', allow_duplicate=True),
@@ -303,6 +328,31 @@ class MatrixTransformationsApp:
                 undone_matrices: MatrixDict,
                 output_logs: str
         ):
+            def validate_input(
+                    name: str | None, 
+                    stored_matrices_: MatrixDict | tuple | list,
+                    output_logs_: str
+            ) -> tuple[bool, str]:
+                if not stored_matrices_:
+                    output_logs_ += 'No matrices exist. '
+                    return False, output_logs_
+                if name and (name not in stored_matrices_):
+                    output_logs_ += (f'Matrix "{matrix_to_invert}" does not '
+                                    f'exist. ')
+                    return False, output_logs_
+
+                return True, output_logs_
+
+            def get_last_matrix_name(
+                    stored_matrices_: MatrixDict | tuple | list
+            ) -> str:
+                non_inverse_matrices = [
+                    key for key in stored_matrices_.keys()
+                    if not key.startswith('I_')
+                ]
+                return non_inverse_matrices[-1] if (
+                    non_inverse_matrices) else None
+
             everything_as_they_are = (
                 stored_matrices,
                 str({f'{name}': mat for name, mat in stored_matrices.items()}),
@@ -311,20 +361,15 @@ class MatrixTransformationsApp:
                 previous_vectors,
                 undone_matrices,
             )
-            new_output_logs = output_logs
-            if not stored_matrices:
-                new_output_logs += 'No matrices exist. '
+
+            valid, new_output_logs = validate_input(name=matrix_to_invert,
+                                                    stored_matrices_=stored_matrices,
+                                                    output_logs_=output_logs)
+            if not valid:
                 return everything_as_they_are + (new_output_logs,)
 
-            non_inverse_matrices = [
-                key for key in stored_matrices.keys()
-                if not key.startswith('I_')
-            ]
-            last_matrix_name = non_inverse_matrices[-1]
-            name = matrix_to_invert if matrix_to_invert else last_matrix_name
-            if name not in stored_matrices:
-                new_output_logs += f'Matrix "{name}" does not exist. '
-                return everything_as_they_are + (new_output_logs,)
+            name = matrix_to_invert if matrix_to_invert else (
+                get_last_matrix_name(stored_matrices))
 
             selected_matrix = np.array(stored_matrices[name])
             inverted_matrix = safe_inverse(selected_matrix)
@@ -334,26 +379,10 @@ class MatrixTransformationsApp:
                 )
                 return everything_as_they_are + (new_output_logs,)
 
-            new_name = "I_" + name
-            if new_name in stored_matrices:
-                existing_inverses = [
-                    key for key in stored_matrices.keys()
-                    if key.startswith(new_name)
-                ]
-                number_list = sorted([
-                    int(re.search(r'_(\d+)$', inverse).group(1))
-                    for inverse in existing_inverses
-                    if re.search(r'_(\d+)$', inverse)
-                ])
-                try:
-                    solution_to_number = next(
-                        (number_list[i] + 1 for i in range(len(number_list) - 1)
-                         if number_list[i + 1] != number_list[i] + 1),
-                        number_list[-1] + 1
-                    )
-                except IndexError:
-                    solution_to_number = 2
-                new_name += f'_{solution_to_number}'
+            new_name = _find_valid_inverse_name(
+                name=name,
+                name_list=stored_matrices
+            )
 
             stored_matrices[new_name] = inverted_matrix.tolist()
             previous_vectors.append(stored_vectors.copy())
@@ -371,7 +400,6 @@ class MatrixTransformationsApp:
                     previous_vectors,
                     {},
                     new_output_logs)
-
 
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
