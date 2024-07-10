@@ -8,10 +8,35 @@ UPPER_LETTERS = (
     'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
 )
 
-COLORS = [
-    'aqua', 'black', 'blueviolet', 'cyan', 'deeppink', 'gold', 'gray', 'green',
-    'hotpink', 'indigo', 'khaki', 'magenta', 'navy', 'orchid', 'purple',
-    'slategray', 'red', 'turquoise', 'violet', 'yellow', 'coral', 'tomato',
-    'sandybrown', 'maroon', 'silver', 'midnightblue', 'peru', 'steelblue',
+COLORS = (
+    'aqua',
+    'black',
+    'blue' 
+    'blueviolet',
+    'cyan',
+    'deeppink',
+    'gold',
+    'gray',
+    'green',
+    'hotpink',
+    'indigo',
+    'khaki',
+    'magenta',
+    'navy',
+    'orchid',
+    'purple',
+    'slategray',
+    'red',
+    'turquoise',
+    'violet',
+    'yellow',
+    'coral',
+    'tomato',
+    'sandybrown',
+    'maroon',
+    'silver',
+    'midnightblue',
+    'peru',
+    'steelblue',
     'white'
-]
+)
