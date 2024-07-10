@@ -275,19 +275,19 @@ class MatrixTransformationsApp:
                     previous_vectors,
                     {})
 
-        def _find_valid_inverse_name(name, name_list):
+        def _find_valid_inverse_name(name, existing_names):
             new_name = 'I_' + name
-            if new_name not in name_list:
+            if new_name not in existing_names:
                 return new_name
 
             existing_inverses = [
-                key for key in name_list
+                key for key in existing_names
                 if key.startswith(new_name)
             ]
             number_list = sorted([
-                int(re.search(r'_(\d+)$', inverse).group(1))
+                int(re.search(r' \((\d+)\)$', inverse).group(1))
                 for inverse in existing_inverses
-                if re.search(r'_(\d+)$', inverse)
+                if re.search(r' \((\d+)\)$', inverse)
             ])
             try:
                 solution_to_number = next(
@@ -297,7 +297,7 @@ class MatrixTransformationsApp:
                 )
             except IndexError:
                 solution_to_number = 2
-            new_name += f'_{solution_to_number}'
+            new_name += f' ({solution_to_number})'
             return new_name
 
         @self.app.callback(
@@ -382,7 +382,7 @@ class MatrixTransformationsApp:
 
             new_name = _find_valid_inverse_name(
                 name=name,
-                name_list=stored_matrices
+                existing_names=stored_matrices
             )
 
             stored_matrices[new_name] = inverted_matrix.tolist()
