@@ -18,7 +18,7 @@ This PR [adds/removes/fixes/replaces] the [feature/bug/etc].
 6. **[optional] Additional Context**:
     <!-- Provide any additional information that may be useful to know. --> 
 
-## Mobile & Desktop Screenshots/Recordings
+## Screenshots/Recordings
 <!--
 Visual changes require screenshots and/or recordings. For non-visual changes, write 'N/A' or include any screenshots/recordings that help with understanding the changes.
 If there are known issues, include relevant screenshots or recordings here.
