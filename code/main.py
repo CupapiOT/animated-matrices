@@ -275,7 +275,7 @@ class MatrixTransformationsApp:
                     previous_vectors,
                     {})
 
-        def _find_valid_inverse_name(name, existing_names):
+        def _find_valid_inverse_name(name, existing_names) -> str:
             new_name = 'I_' + name
             if new_name not in existing_names:
                 return new_name
@@ -327,7 +327,7 @@ class MatrixTransformationsApp:
                 previous_vectors: list[Vectors],
                 undone_matrices: MatrixDict,
                 output_logs: str
-        ):
+        ) -> tuple:
             def _validate_input(
                     name: str | None,
                     stored_matrices_: MatrixDict | tuple | list,
@@ -409,7 +409,7 @@ class MatrixTransformationsApp:
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
-            Output('output-logs', 'children'),
+            Output('output-logs', 'children', allow_duplicate=True),
             [Input('undo-matrix-button', 'n_clicks'),
              State('matrix-store', 'data'),
              ],
@@ -540,6 +540,7 @@ class MatrixTransformationsApp:
             Output('vector-store', 'data'),
             Output('previous-vector-store', 'data'),
             Output('undone-matrices-store', 'data'),
+            Output('output-logs', 'children'),
             [Input('repeat-matrix-button', 'n_clicks'),
              State('repeat-matrix-entry-name', 'value'),
              ],
@@ -547,11 +548,31 @@ class MatrixTransformationsApp:
              State('vector-store', 'data'),
              State('previous-vector-store', 'data'),
              State('undone-matrices-store', 'data'),
+             State('output-logs', 'children'),
              ],
             prevent_initial_call=True
         )
-        def repeat_matrix():
-            pass
+        def repeat_matrix(
+                _,
+                selected_matrix: str | None,
+                stored_matrices: MatrixDict,
+                stored_vectors: Vectors,
+                previous_vectors: list[Vectors],
+                undone_matrices: MatrixDict,
+                output_logs: str
+        ) -> tuple:
+            if not stored_matrices:
+                return (stored_matrices,
+                        '',
+                        create_figure(stored_vectors),
+                        stored_vectors,
+                        previous_vectors,
+                        undone_matrices,
+                        output_logs)
+
+            name = selected_matrix
+            if not name:
+                name = list(stored_matrices.keys())[-1]
 
         @self.app.callback(
             Output('add-vector-button', 'children'),
