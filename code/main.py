@@ -473,12 +473,12 @@ class MatrixTransformationsApp:
                     new_output_logs)
 
         @self.app.callback(
-            Output('matrix-store', 'data'),
-            Output('matrix-list', 'children'),
-            Output('graph', 'figure'),
-            Output('vector-store', 'data'),
-            Output('previous-vector-store', 'data'),
-            Output('undone-matrices-store', 'data'),
+            Output('matrix-store', 'data', allow_duplicate=True),
+            Output('matrix-list', 'children', allow_duplicate=True),
+            Output('graph', 'figure', allow_duplicate=True),
+            Output('vector-store', 'data', allow_duplicate=True),
+            Output('previous-vector-store', 'data', allow_duplicate=True),
+            Output('undone-matrices-store', 'data', allow_duplicate=True),
             [Input('redo-matrix-button', 'n_clicks'),
              State('matrix-store', 'data'),
              ],
@@ -532,6 +532,26 @@ class MatrixTransformationsApp:
                     restored_vectors,
                     previous_vectors,
                     undone_matrices)
+
+        @self.app.callback(
+            Output('matrix-store', 'data'),
+            Output('matrix-list', 'children'),
+            Output('graph', 'figure'),
+            Output('vector-store', 'data'),
+            Output('previous-vector-store', 'data'),
+            Output('undone-matrices-store', 'data'),
+            [Input('repeat-matrix-button', 'n_clicks'),
+             State('repeat-matrix-entry-name', 'value'),
+             ],
+            [State('matrix-store', 'data'),
+             State('vector-store', 'data'),
+             State('previous-vector-store', 'data'),
+             State('undone-matrices-store', 'data'),
+             ],
+            prevent_initial_call=True
+        )
+        def repeat_matrix():
+            pass
 
         @self.app.callback(
             Output('add-vector-button', 'children'),
