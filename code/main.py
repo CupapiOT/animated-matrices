@@ -533,6 +533,36 @@ class MatrixTransformationsApp:
                     previous_vectors,
                     undone_matrices)
 
+        def _generate_unique_matrix_name(name, existing_names):
+            if name not in existing_names:
+                return name
+
+            new_name = name
+            name_is_duplicate = (
+                    re.search(r' \((\d+)\)$', name) is not None
+            )
+            if name_is_duplicate:
+                new_name = name[:-4]
+
+            existing_duplicates = [
+                key for key in existing_names
+                if key.startswith(new_name)
+            ]
+            number_list = sorted([
+                int(re.search(r' \((\d+)\)$', name).group(1))
+                for name in existing_duplicates
+                if re.search(r' \((\d+)\)$', name)
+            ])
+            try:
+                solution_to_number = next(
+                    (number_list[i] + 1 for i in range(len(number_list) - 1)
+                     if number_list[i + 1] != number_list[i] + 1),
+                    number_list[-1] + 1
+                )
+            except IndexError:
+                solution_to_number = 2
+            return new_name + f' ({solution_to_number})'
+
         @self.app.callback(
             Output('matrix-store', 'data'),
             Output('matrix-list', 'children'),
@@ -593,6 +623,11 @@ class MatrixTransformationsApp:
 
             if not selected_matrix:
                 selected_matrix = list(stored_matrices.keys())[-1]
+
+            new_name = _generate_unique_matrix_name(
+                selected_matrix,
+                stored_matrices
+            )
 
         @self.app.callback(
             Output('add-vector-button', 'children'),
