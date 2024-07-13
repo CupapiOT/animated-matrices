@@ -629,6 +629,23 @@ class MatrixTransformationsApp:
                 stored_matrices
             )
 
+            stored_matrices[new_name] = stored_matrices[selected_matrix]
+            previous_vectors.append(stored_vectors.copy())
+            new_vectors = self.apply_matrix_to_vectors(
+                stored_matrices[selected_matrix],
+                stored_vectors
+            )
+            matrix_list = str({f'{name}': mat
+                               for name, mat in stored_matrices.items()})
+
+            return (stored_matrices,
+                    matrix_list,
+                    create_figure(new_vectors),
+                    new_vectors,
+                    previous_vectors,
+                    {},
+                    output_logs)
+
         @self.app.callback(
             Output('add-vector-button', 'children'),
             [Input('new-vector-entry-name', 'value'),
