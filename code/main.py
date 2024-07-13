@@ -561,18 +561,38 @@ class MatrixTransformationsApp:
                 undone_matrices: MatrixDict,
                 output_logs: str
         ) -> tuple:
-            if not stored_matrices:
-                return (stored_matrices,
-                        '',
-                        create_figure(stored_vectors),
-                        stored_vectors,
-                        previous_vectors,
-                        undone_matrices,
-                        output_logs)
+            def _validate_input(
+                    name: str | None,
+                    stored_matrices_: MatrixDict | tuple | list,
+                    output_logs_: str
+            ) -> tuple[bool, str]:
+                if not stored_matrices_:
+                    output_logs_ += 'No matrices exist. '
+                    return False, output_logs_
+                if name and (name not in stored_matrices_):
+                    output_logs_ += f'Matrix "{name}" does not exist. '
+                    return False, output_logs_
+                return True, output_logs_
 
-            name = selected_matrix
-            if not name:
-                name = list(stored_matrices.keys())[-1]
+            everything_as_they_are = (
+                stored_matrices,
+                str({f'{name}': mat for name, mat in stored_matrices.items()}),
+                create_figure(stored_vectors),
+                stored_vectors,
+                previous_vectors,
+                undone_matrices,
+            )
+
+            valid, new_output_logs = _validate_input(
+                name=selected_matrix,
+                stored_matrices_=stored_matrices,
+                output_logs_=output_logs
+            )
+            if not valid:
+                return everything_as_they_are + (new_output_logs,)
+
+            if not selected_matrix:
+                selected_matrix = list(stored_matrices.keys())[-1]
 
         @self.app.callback(
             Output('add-vector-button', 'children'),
