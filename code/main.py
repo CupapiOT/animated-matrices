@@ -275,7 +275,7 @@ class MatrixTransformationsApp:
                     previous_vectors,
                     {})
 
-        def _find_valid_inverse_name(name, existing_names):
+        def _find_valid_inverse_name(name, existing_names) -> str:
             new_name = 'I_' + name
             if new_name not in existing_names:
                 return new_name
@@ -327,7 +327,7 @@ class MatrixTransformationsApp:
                 previous_vectors: list[Vectors],
                 undone_matrices: MatrixDict,
                 output_logs: str
-        ):
+        ) -> tuple:
             def _validate_input(
                     name: str | None,
                     stored_matrices_: MatrixDict | tuple | list,
@@ -409,10 +409,11 @@ class MatrixTransformationsApp:
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
-            Output('output-logs', 'children'),
+            Output('output-logs', 'children', allow_duplicate=True),
             [Input('undo-matrix-button', 'n_clicks'),
              State('matrix-store', 'data'),
-             State('vector-store', 'data'),
+             ],
+            [State('vector-store', 'data'),
              State('previous-vector-store', 'data'),
              State('undone-matrices-store', 'data'),
              State('output-logs', 'children'),
@@ -472,15 +473,16 @@ class MatrixTransformationsApp:
                     new_output_logs)
 
         @self.app.callback(
-            Output('matrix-store', 'data'),
-            Output('matrix-list', 'children'),
-            Output('graph', 'figure'),
-            Output('vector-store', 'data'),
-            Output('previous-vector-store', 'data'),
-            Output('undone-matrices-store', 'data'),
+            Output('matrix-store', 'data', allow_duplicate=True),
+            Output('matrix-list', 'children', allow_duplicate=True),
+            Output('graph', 'figure', allow_duplicate=True),
+            Output('vector-store', 'data', allow_duplicate=True),
+            Output('previous-vector-store', 'data', allow_duplicate=True),
+            Output('undone-matrices-store', 'data', allow_duplicate=True),
             [Input('redo-matrix-button', 'n_clicks'),
              State('matrix-store', 'data'),
-             State('vector-store', 'data'),
+             ],
+            [State('vector-store', 'data'),
              State('previous-vector-store', 'data'),
              State('undone-matrices-store', 'data'),
              ],
@@ -530,6 +532,119 @@ class MatrixTransformationsApp:
                     restored_vectors,
                     previous_vectors,
                     undone_matrices)
+
+        def _generate_unique_matrix_name(name, existing_names):
+            if name not in existing_names:
+                return name
+
+            new_name = name
+            name_is_duplicate = (
+                    re.search(r' \((\d+)\)$', name) is not None
+            )
+            if name_is_duplicate:
+                new_name = name[:-4]
+
+            existing_duplicates = [
+                key for key in existing_names
+                if key.startswith(new_name)
+            ]
+            number_list = sorted([
+                int(re.search(r' \((\d+)\)$', name).group(1))
+                for name in existing_duplicates
+                if re.search(r' \((\d+)\)$', name)
+            ])
+            try:
+                solution_to_number = next(
+                    (number_list[i] + 1 for i in range(len(number_list) - 1)
+                     if number_list[i + 1] != number_list[i] + 1),
+                    number_list[-1] + 1
+                )
+            except IndexError:
+                solution_to_number = 2
+            return new_name + f' ({solution_to_number})'
+
+        @self.app.callback(
+            Output('matrix-store', 'data'),
+            Output('matrix-list', 'children'),
+            Output('graph', 'figure'),
+            Output('vector-store', 'data'),
+            Output('previous-vector-store', 'data'),
+            Output('undone-matrices-store', 'data'),
+            Output('output-logs', 'children'),
+            [Input('repeat-matrix-button', 'n_clicks'),
+             State('repeat-matrix-entry-name', 'value'),
+             ],
+            [State('matrix-store', 'data'),
+             State('vector-store', 'data'),
+             State('previous-vector-store', 'data'),
+             State('undone-matrices-store', 'data'),
+             State('output-logs', 'children'),
+             ],
+            prevent_initial_call=True
+        )
+        def repeat_matrix(
+                _,
+                selected_matrix: str | None,
+                stored_matrices: MatrixDict,
+                stored_vectors: Vectors,
+                previous_vectors: list[Vectors],
+                undone_matrices: MatrixDict,
+                output_logs: str
+        ) -> tuple:
+            def _validate_input(
+                    name: str | None,
+                    stored_matrices_: MatrixDict | tuple | list,
+                    output_logs_: str
+            ) -> tuple[bool, str]:
+                if not stored_matrices_:
+                    output_logs_ += 'No matrices exist. '
+                    return False, output_logs_
+                if name and (name not in stored_matrices_):
+                    output_logs_ += f'Matrix "{name}" does not exist. '
+                    return False, output_logs_
+                return True, output_logs_
+
+            everything_as_they_are = (
+                stored_matrices,
+                str({f'{name}': mat for name, mat in stored_matrices.items()}),
+                create_figure(stored_vectors),
+                stored_vectors,
+                previous_vectors,
+                undone_matrices,
+            )
+
+            valid, new_output_logs = _validate_input(
+                name=selected_matrix,
+                stored_matrices_=stored_matrices,
+                output_logs_=output_logs
+            )
+            if not valid:
+                return everything_as_they_are + (new_output_logs,)
+
+            if not selected_matrix:
+                selected_matrix = list(stored_matrices.keys())[-1]
+
+            new_name = _generate_unique_matrix_name(
+                selected_matrix,
+                stored_matrices
+            )
+
+            stored_matrices[new_name] = stored_matrices[selected_matrix]
+            previous_vectors.append(stored_vectors.copy())
+            new_vectors = self.apply_matrix_to_vectors(
+                stored_matrices[selected_matrix],
+                stored_vectors
+            )
+            matrix_list = str({f'{name}': mat
+                               for name, mat in stored_matrices.items()})
+
+            return (stored_matrices,
+                    matrix_list,
+                    create_figure(new_vectors),
+                    new_vectors,
+                    previous_vectors,
+                    {},
+                    output_logs)
 
         @self.app.callback(
             Output('add-vector-button', 'children'),
@@ -746,6 +861,30 @@ class MatrixTransformationsApp:
                                 n_clicks=0,
                                 style={'width': '100%'},
                             ),
+
+                            html.Hr(style={'marginBottom': '15px',
+                                           'marginTop': '15px',
+                                           'width': '100%'}),
+                            html.Div([
+                                dcc.Input(
+                                    id='repeat-matrix-entry-name',
+                                    type='text',
+                                    style={'width': '20%',
+                                           'marginRight': '5%'},
+                                    size='2',
+                                    placeholder='Name',
+                                ),
+                                html.Button(
+                                    'Repeat Matrix',
+                                    id='repeat-matrix-button',
+                                    n_clicks=0,
+                                    style={'width': '70%'},
+                                )
+                            ], style={'width': '100%',
+                                      'display': 'flex',
+                                      'flexDirection': 'row',
+                                      'alignItems': 'center',
+                                      'justifyContent': 'center'}),
                         ], style={'width': '100%',
                                   'display': 'flex',
                                   'flexDirection': 'column',
