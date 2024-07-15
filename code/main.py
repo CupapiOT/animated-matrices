@@ -257,8 +257,6 @@ class MatrixTransformationsApp:
             matrix_name = name if name else UPPER_LETTERS[n_clicks % 26 - 1]
 
             stored_matrices[matrix_name] = matrix.tolist()
-            matrix_list = str({f'{name}': mat
-                               for name, mat in stored_matrices.items()})
 
             previous_vectors.append(stored_vectors.copy())
 
@@ -269,7 +267,7 @@ class MatrixTransformationsApp:
             )
 
             return (stored_matrices,
-                    matrix_list,
+                    str(stored_matrices),
                     create_figure(new_vectors),
                     new_vectors,
                     previous_vectors,
@@ -355,7 +353,7 @@ class MatrixTransformationsApp:
 
             everything_as_they_are = (
                 stored_matrices,
-                str({f'{name}': mat for name, mat in stored_matrices.items()}),
+                str(stored_matrices),
                 create_figure(stored_vectors),
                 stored_vectors,
                 previous_vectors,
@@ -391,11 +389,9 @@ class MatrixTransformationsApp:
                 inverted_matrix,
                 stored_vectors
             )
-            matrix_list = str({f'{name}': mat
-                               for name, mat in stored_matrices.items()})
 
             return (stored_matrices,
-                    matrix_list,
+                    str(stored_matrices),
                     create_figure(new_vectors),
                     new_vectors,
                     previous_vectors,
@@ -459,13 +455,11 @@ class MatrixTransformationsApp:
 
             new_undone_matrices[last_matrix_name] = new_stored_matrices.pop(
                 last_matrix_name)
-            matrix_list = str({f'{name}': mat
-                               for name, mat in new_stored_matrices.items()})
 
             restored_vectors = new_previous_vectors.pop()
 
             return (new_stored_matrices,
-                    matrix_list,
+                    str(stored_matrices),
                     create_figure(restored_vectors),
                     restored_vectors,
                     new_previous_vectors,
@@ -504,8 +498,7 @@ class MatrixTransformationsApp:
                         undone_matrices)
             if not undone_matrices:
                 return (stored_matrices,
-                        str({f'{name}': mat
-                             for name, mat in stored_matrices.items()}),
+                        str(stored_matrices),
                         create_figure(stored_vectors),
                         stored_vectors,
                         previous_vectors,
@@ -514,8 +507,6 @@ class MatrixTransformationsApp:
             last_undone_matrix_name = list(undone_matrices.keys())[-1]
             stored_matrices[last_undone_matrix_name] = undone_matrices.pop(
                 last_undone_matrix_name)
-            matrix_list = str({f'{name}': mat
-                               for name, mat in stored_matrices.items()})
 
             previous_vectors.append(stored_vectors.copy())
 
@@ -527,7 +518,7 @@ class MatrixTransformationsApp:
             )
 
             return (stored_matrices,
-                    matrix_list,
+                    str(stored_matrices),
                     create_figure(restored_vectors),
                     restored_vectors,
                     previous_vectors,
@@ -606,7 +597,7 @@ class MatrixTransformationsApp:
 
             everything_as_they_are = (
                 stored_matrices,
-                str({f'{name}': mat for name, mat in stored_matrices.items()}),
+                str(stored_matrices),
                 create_figure(stored_vectors),
                 stored_vectors,
                 previous_vectors,
@@ -635,11 +626,9 @@ class MatrixTransformationsApp:
                 stored_matrices[selected_matrix],
                 stored_vectors
             )
-            matrix_list = str({f'{name}': mat
-                               for name, mat in stored_matrices.items()})
 
             return (stored_matrices,
-                    matrix_list,
+                    str(stored_matrices),
                     create_figure(new_vectors),
                     new_vectors,
                     previous_vectors,
