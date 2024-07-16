@@ -4,6 +4,7 @@ about: Suggest significant, non-altering improvements that can be made.
 title: "[REFACTOR]"
 labels: refactor
 assignees: CupapiOT
+description: This template is meant for larger refactors that have a significant effect on the codebase. For minor refactors or tweaks, issues may not be necessary.
 
 ---
 
