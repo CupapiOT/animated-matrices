@@ -503,16 +503,13 @@ class MatrixTransformationsApp:
                 previous_vectors: list[Vectors],
                 undone_matrices: MatrixDict
         ) -> tuple:
-            if (not stored_matrices) and (not undone_matrices):
-                return (stored_matrices,
-                        '',
-                        create_figure(stored_vectors),
-                        stored_vectors,
-                        previous_vectors,
-                        undone_matrices)
+            # A condition to check for empty `not stored_matrices` is
+            # not needed because `undone_matrices` may not be empty
+            # while `stored_matrices` is empty, but if `undone_matrices`
+            # is empty, then `stored_matrices` is for sure empty too.
             if not undone_matrices:
                 return (stored_matrices,
-                        str(stored_matrices),
+                        str(stored_matrices) if stored_matrices else '',
                         create_figure(stored_vectors),
                         stored_vectors,
                         previous_vectors,
