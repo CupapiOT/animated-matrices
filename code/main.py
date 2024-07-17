@@ -503,7 +503,7 @@ class MatrixTransformationsApp:
                 previous_vectors: list[Vectors],
                 undone_matrices: MatrixDict
         ) -> tuple:
-            # A condition to check for empty `not stored_matrices` is
+            # A condition to check for an empty `stored_matrices` is
             # not needed because `undone_matrices` may not be empty
             # while `stored_matrices` is empty, but if `undone_matrices`
             # is empty, then `stored_matrices` is for sure empty too.
