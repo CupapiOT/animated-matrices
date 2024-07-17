@@ -274,15 +274,20 @@ class MatrixTransformationsApp:
                     {})
 
         def generate_unique_matrix_name(name: str, existing_names) -> str:
+            def _remove_duplicate_suffix(name: str) -> str:
+                new_name = name
+                # A name is a duplicate if it ends in ` (<int>)`.
+                name_is_duplicate = (
+                        re.search(r' \((\d+)\)$', name) is not None
+                )
+                if name_is_duplicate:
+                    new_name = name[:-4]
+                return new_name
+
             if name not in existing_names:
                 return name
 
-            new_name = name
-            name_is_duplicate = (
-                    re.search(r' \((\d+)\)$', name) is not None
-            )
-            if name_is_duplicate:
-                new_name = name[:-4]
+            new_name = _remove_duplicate_suffix(name)
 
             existing_duplicates = [
                 key for key in existing_names
