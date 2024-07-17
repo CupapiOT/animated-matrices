@@ -274,39 +274,42 @@ class MatrixTransformationsApp:
                     {})
 
         def generate_unique_matrix_name(name: str, existing_names) -> str:
-            def _remove_duplicate_suffix(name: str) -> str:
-                new_name = name
+            def _remove_duplicate_suffix(base_name: str) -> str:
+                non_duplicate_name = base_name
                 # A name is a duplicate if it ends in ` (<int>)`.
                 name_is_duplicate = (
-                        re.search(r' \((\d+)\)$', name) is not None
+                        re.search(r' \((\d+)\)$', base_name) is not None
                 )
                 if name_is_duplicate:
-                    new_name = name[:-4]
-                return new_name
+                    non_duplicate_name = base_name[:-4]
+                return non_duplicate_name
+
+            def _find_next_num_in_sequence(names):
+                existing_duplicates = [
+                    name for name in names
+                    if name.startswith(new_name)
+                ]
+                number_list = sorted([
+                    int(re.search(r' \((\d+)\)$', duplicate_name).group(1))
+                    for duplicate_name in existing_duplicates
+                    if re.search(r' \((\d+)\)$', duplicate_name)
+                ])
+                try:
+                    next_num = next(
+                        (number_list[i] + 1
+                         for i in range(len(number_list) - 1)
+                         if number_list[i + 1] != number_list[i] + 1),
+                        number_list[-1] + 1
+                    )
+                except IndexError:
+                    next_num = 2
+                return next_num
 
             if name not in existing_names:
                 return name
-
             new_name = _remove_duplicate_suffix(name)
-
-            existing_duplicates = [
-                key for key in existing_names
-                if key.startswith(new_name)
-            ]
-            number_list = sorted([
-                int(re.search(r' \((\d+)\)$', name).group(1))
-                for name in existing_duplicates
-                if re.search(r' \((\d+)\)$', name)
-            ])
-            try:
-                solution_to_number = next(
-                    (number_list[i] + 1 for i in range(len(number_list) - 1)
-                     if number_list[i + 1] != number_list[i] + 1),
-                    number_list[-1] + 1
-                )
-            except IndexError:
-                solution_to_number = 2
-            return new_name + f' ({solution_to_number})'
+            index_solution = _find_next_num_in_sequence(existing_names)
+            return new_name + f' ({index_solution})'
 
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
