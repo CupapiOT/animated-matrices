@@ -272,7 +272,7 @@ class MatrixTransformationsApp:
                     new_vectors,
                     previous_vectors,
                     {})
-        
+
         def generate_unique_matrix_name(name: str, existing_names) -> str:
             if name not in existing_names:
                 return name
@@ -407,9 +407,10 @@ class MatrixTransformationsApp:
                 log = f'Matrix "{name}" does not have an inverse. '
                 new_output_logs += log
                 return everything_as_they_are + (new_output_logs,)
-
-            new_name = _find_valid_inverse_name(
-                name=name,
+            
+            inverse_name = 'I_' + name
+            new_name = generate_unique_matrix_name(
+                name=inverse_name,
                 existing_names=stored_matrices
             )
 
@@ -645,7 +646,7 @@ class MatrixTransformationsApp:
             if not selected_matrix:
                 selected_matrix = list(stored_matrices.keys())[-1]
 
-            new_name = _generate_unique_matrix_name(
+            new_name = generate_unique_matrix_name(
                 selected_matrix,
                 stored_matrices
             )
