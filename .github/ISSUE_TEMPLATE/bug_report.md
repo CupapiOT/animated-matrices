@@ -20,8 +20,8 @@ Result: See error.
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Screenshots/Screen Recordings**
+If applicable, add screenshots and/or screen recordings to help explain your problem.
 
 **Desktop (please complete the following information):**
  - OS: [e.g. Windows]
