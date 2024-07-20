@@ -473,7 +473,7 @@ class MatrixTransformationsApp:
             restored_vectors = new_previous_vectors.pop()
 
             return (new_stored_matrices,
-                    str(stored_matrices),
+                    str(new_stored_matrices),
                     create_figure(restored_vectors),
                     restored_vectors,
                     new_previous_vectors,
