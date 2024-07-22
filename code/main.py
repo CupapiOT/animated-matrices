@@ -237,6 +237,8 @@ class MatrixTransformationsApp:
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
+            Output('animation-interval', 'disabled'),
+            Output('animation-steps', 'data'),
             [Input('add-matrix-button', 'n_clicks'),
              State('matrix-entry-1', 'value'),
              State('matrix-entry-2', 'value'),
@@ -651,6 +653,10 @@ class MatrixTransformationsApp:
                     disabled=True,
                     interval=100,
                     n_intervals=0
+                ),
+                dcc.Store(
+                    id='animation-steps',
+                    data=[]
                 ),
                 dcc.Graph(id='graph',
                           figure=create_2d_basis_vectors(self.BASIS_VECTORS),
