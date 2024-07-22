@@ -223,6 +223,9 @@ class MatrixTransformationsApp:
                     stored_vectors,
                     previous_vectors)
 
+        def create_frames(start_matrix, end_matrix, steps=10):
+            pass
+
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
             Output('matrix-list', 'children', allow_duplicate=True),
@@ -639,6 +642,12 @@ class MatrixTransformationsApp:
         return html.Div([
             html.H1('Matrix Visualizer'),
             html.Div([
+                dcc.Interval(
+                    id='animation-interval',
+                    disabled=True,
+                    interval=100,
+                    n_intervals=0
+                ),
                 dcc.Graph(id='graph',
                           figure=create_2d_basis_vectors(self.BASIS_VECTORS),
                           style={'height': '1000%',
