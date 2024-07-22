@@ -224,7 +224,11 @@ class MatrixTransformationsApp:
                     previous_vectors)
 
         def create_frames(start_matrix, end_matrix, steps=10):
-            pass
+            # Sliced with `[1:]` because the first of these frames
+            # would be the initial state, which would not be useful to
+            # the user.
+            return [(1 - t) * start_matrix + t * end_matrix
+                    for t in np.linspace(0, 1, num=steps + 1)][1:]
 
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
