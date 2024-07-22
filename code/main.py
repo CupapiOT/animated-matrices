@@ -250,6 +250,8 @@ class MatrixTransformationsApp:
              State('previous-vector-store', 'data'),
              State('new-matrix-entry-name', 'value'),
              ],
+            [State('animation-steps', 'data')
+             ],
             prevent_initial_call=True
         )
         def add_matrix(
@@ -259,6 +261,7 @@ class MatrixTransformationsApp:
                 stored_vectors: Vectors,
                 previous_vectors: list[Vectors],
                 name: str,
+                animation_steps: list[Vectors],
         ) -> tuple:
             a, b, c, d = set_nonetype_to_zero(a, b, c, d)
 
@@ -275,12 +278,18 @@ class MatrixTransformationsApp:
                 stored_vectors
             )
 
+            last_matrix = np.array(list(stored_matrices.values())[-2])
+            frames = create_frames(last_matrix, most_recent_matrix)
+            new_steps = animation_steps.copy() + frames
+
             return (stored_matrices,
                     str(stored_matrices),
                     create_figure(new_vectors),
                     new_vectors,
                     previous_vectors,
-                    {})
+                    {},
+                    False,
+                    new_steps)
 
         def generate_unique_matrix_name(name: str, existing_names) -> str:
             def _remove_duplicate_suffix(base_name: str) -> str:
