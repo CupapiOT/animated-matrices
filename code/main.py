@@ -301,13 +301,26 @@ class MatrixTransformationsApp:
             [Input('animation-interval', 'n_intervals'),
              State('animation-steps', 'data')
              ],
+            [State('vector-store', 'data')
+             ],
             prevent_initial_call=True
         )
         def animate_graph(
                 can_animate: bool,
-                animation_frames: list[Vectors]
+                animation_frames: list[Matrix],
+                stored_vectors: Vectors
         ) -> tuple:
-            return no_update, no_update, no_update
+            if not animation_frames or not can_animate:
+                return no_update, True, no_update
+
+            current_frame = animation_frames[0]
+            interpolated_vectors = self.apply_matrix_to_vectors(
+                current_frame,
+                stored_vectors
+            )
+            return (create_figure(interpolated_vectors),
+                    no_update,
+                    animation_frames[1:] if animation_frames else [])
 
         def generate_unique_matrix_name(name: str, existing_names) -> str:
             def _remove_duplicate_suffix(base_name: str) -> str:
