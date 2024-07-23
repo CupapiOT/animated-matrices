@@ -1,5 +1,5 @@
 import numpy as np
-from dash import Dash, dcc, html
+from dash import Dash, dcc, html, no_update
 from dash.dependencies import Input, Output, State
 import re
 from constants import *
@@ -237,8 +237,8 @@ class MatrixTransformationsApp:
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
-            Output('animation-interval', 'disabled'),
-            Output('animation-steps', 'data'),
+            Output('animation-interval', 'disabled', allow_duplicate=True),
+            Output('animation-steps', 'data', allow_duplicate=True),
             [Input('add-matrix-button', 'n_clicks'),
              State('matrix-entry-1', 'value'),
              State('matrix-entry-2', 'value'),
@@ -284,6 +284,7 @@ class MatrixTransformationsApp:
                 base_matrix = np.identity(2)
             frames = create_frames(base_matrix, most_recent_matrix)
             new_steps = animation_steps.copy() + frames
+
             return (stored_matrices,
                     str(stored_matrices),
                     create_figure(new_vectors),
@@ -292,6 +293,21 @@ class MatrixTransformationsApp:
                     {},
                     False,
                     new_steps)
+
+        @self.app.callback(
+            Output('graph', 'figure', allow_duplicate=True),
+            Output('animation-interval', 'disabled'),
+            Output('animation-steps', 'data'),
+            [Input('animation-interval', 'n_intervals'),
+             State('animation-steps', 'data')
+             ],
+            prevent_initial_call=True
+        )
+        def animate_graph(
+                can_animate: bool,
+                animation_frames: list[Vectors]
+        ) -> tuple:
+            return no_update, no_update, no_update
 
         def generate_unique_matrix_name(name: str, existing_names) -> str:
             def _remove_duplicate_suffix(base_name: str) -> str:
