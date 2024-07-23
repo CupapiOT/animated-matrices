@@ -278,10 +278,12 @@ class MatrixTransformationsApp:
                 stored_vectors
             )
 
-            last_matrix = np.array(list(stored_matrices.values())[-2])
-            frames = create_frames(last_matrix, most_recent_matrix)
+            if len(stored_matrices) >= 2:
+                base_matrix = np.array(list(stored_matrices.values())[-2])
+            else:
+                base_matrix = np.identity(2)
+            frames = create_frames(base_matrix, most_recent_matrix)
             new_steps = animation_steps.copy() + frames
-
             return (stored_matrices,
                     str(stored_matrices),
                     create_figure(new_vectors),
