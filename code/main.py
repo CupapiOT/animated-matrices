@@ -227,13 +227,14 @@ class MatrixTransformationsApp:
             # Sliced with `[1:]` because the first of these frames
             # would be the initial state, which would not be useful to
             # the user.
+            print(start_matrix, "\n", end_matrix)
             return [(1 - t) * start_matrix + t * end_matrix
                     for t in np.linspace(0, 1, num=steps + 1)][1:]
 
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
             Output('matrix-list', 'children', allow_duplicate=True),
-            Output('graph', 'figure', allow_duplicate=True),
+            # Output('graph', 'figure', allow_duplicate=True),
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
@@ -287,7 +288,7 @@ class MatrixTransformationsApp:
 
             return (stored_matrices,
                     str(stored_matrices),
-                    create_figure(new_vectors),
+                    # no_update,
                     new_vectors,
                     previous_vectors,
                     {},
@@ -301,22 +302,22 @@ class MatrixTransformationsApp:
             [Input('animation-interval', 'n_intervals'),
              State('animation-steps', 'data')
              ],
-            [State('vector-store', 'data')
+            [State('previous-vector-store', 'data')
              ],
             prevent_initial_call=True
         )
         def animate_graph(
                 can_animate: bool,
                 animation_frames: list[Matrix],
-                stored_vectors: Vectors
+                previous_vectors: list[Vectors]
         ) -> tuple:
-            if not animation_frames or not can_animate:
+            if (not animation_frames) or (not can_animate):
                 return no_update, True, no_update
 
             current_frame = animation_frames[0]
             interpolated_vectors = self.apply_matrix_to_vectors(
                 current_frame,
-                stored_vectors
+                previous_vectors[-1]
             )
             return (create_figure(interpolated_vectors),
                     no_update,
