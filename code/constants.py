@@ -5,7 +5,7 @@ UPPER_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 COLORS = (
     'aqua',
     'black',
-    'blue' 
+    'blue', 
     'blueviolet',
     'cyan',
     'deeppink',
