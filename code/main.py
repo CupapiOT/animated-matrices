@@ -160,7 +160,7 @@ class MatrixTransformationsApp:
         ) -> tuple:
             x, y = _vector_getter(x_val, y_val)
             vector_name = name if name else (LOWER_LETTERS[n_clicks % 26 - 1])
-            stored_vectors[vector_name] = [[x, y], color]
+            stored_vectors[vector_name] = [(x, y), color]
             if not previous_vectors:
                 return (create_figure(stored_vectors),
                         stored_vectors,
@@ -223,11 +223,33 @@ class MatrixTransformationsApp:
                     stored_vectors,
                     previous_vectors)
 
-        def create_frames(start_matrix, end_matrix, steps=10):
+        def create_frames(start_matrix: np.ndarray = np.identity(2), end_matrix: np.ndarray | None = None, steps: int =10) -> list[Matrix]:
+            """
+            Creates interpolation frames from one matrix to another.
+            Parameters:
+            - start_matrix: Any matrix. Usually the identity matrix, details below.
+            - end_matrix: Any matrix.
+            - steps: The number of interpolated frames to return.
+            Returns:
+            - A list of matrices containing the interpolated matrices.
+
+            IMPORTANT:
+              When generating animation frames, we interpolate from the identity matrix
+              to the matrix being applied. This is because the animation applies each
+              intermediate matrix to the CURRENT positions of the vectors on the graph.
+             
+              This means we must not interpolate from the last matrix applied.
+              Doing so creates either:
+              - a zero-difference (no animation if matrices are equal), or
+              - unintended compound transformations (exponential growth when chaining).
+             
+              Always interpolate from the intended identity matrix to the intended matrix.
+            """
+
             # Sliced with `[1:]` because the first of these frames
             # would be the initial state, which would not be useful to
             # the user.
-            print(start_matrix, "\n", end_matrix)
+            print("Start:\n", start_matrix, "\nEnd:\n", end_matrix, "\n")
             return [(1 - t) * start_matrix + t * end_matrix
                     for t in np.linspace(0, 1, num=steps + 1)][1:]
 
@@ -279,11 +301,7 @@ class MatrixTransformationsApp:
                 stored_vectors
             )
 
-            if len(stored_matrices) >= 2:
-                base_matrix = np.array(list(stored_matrices.values())[-2])
-            else:
-                base_matrix = np.identity(2)
-            frames = create_frames(base_matrix, most_recent_matrix)
+            frames = create_frames(start_matrix=np.identity(2), end_matrix=most_recent_matrix, steps=10)
             new_steps = animation_steps.copy() + frames
 
             return (stored_matrices,
