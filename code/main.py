@@ -637,11 +637,13 @@ class MatrixTransformationsApp:
         @self.app.callback(
             Output('matrix-store', 'data'),
             Output('matrix-list', 'children'),
-            Output('graph', 'figure'),
+            # Output('graph', 'figure'),
             Output('vector-store', 'data'),
             Output('previous-vector-store', 'data'),
             Output('undone-matrices-store', 'data'),
             Output('output-logs', 'children'),
+            Output('animation-interval', 'disabled', allow_duplicate=True),
+            Output('animation-steps', 'data', allow_duplicate=True),
             [Input('repeat-matrix-button', 'n_clicks'),
              State('repeat-matrix-entry-name', 'value'),
              ],
@@ -650,6 +652,8 @@ class MatrixTransformationsApp:
              State('previous-vector-store', 'data'),
              State('undone-matrices-store', 'data'),
              State('output-logs', 'children'),
+             ],
+            [State('animation-steps', 'data')
              ],
             prevent_initial_call=True
         )
@@ -660,7 +664,8 @@ class MatrixTransformationsApp:
                 stored_vectors: Vectors,
                 previous_vectors: list[Vectors],
                 undone_matrices: MatrixDict,
-                output_logs: str
+                output_logs: str,
+                animation_steps: list[Matrix]
         ) -> tuple:
             def _validate_input(
                     name: str | None,
@@ -675,6 +680,7 @@ class MatrixTransformationsApp:
                     return False, output_logs_
                 return True, output_logs_
 
+            # TODO: Refactor with no-update
             everything_as_they_are = (
                 stored_matrices,
                 str(stored_matrices),
@@ -707,13 +713,18 @@ class MatrixTransformationsApp:
                 stored_vectors
             )
 
+            most_recent_matrix = np.array(list(stored_matrices.values())[-1])
+            new_steps = update_animations(animation_steps=animation_steps.copy(), end_matrix=most_recent_matrix)
+
             return (stored_matrices,
                     str(stored_matrices),
-                    create_figure(new_vectors),
+                    # create_figure(new_vectors),
                     new_vectors,
                     previous_vectors,
                     {},
-                    output_logs)
+                    output_logs,
+                    False,
+                    new_steps)
 
         @self.app.callback(
             Output('add-vector-button', 'children'),
