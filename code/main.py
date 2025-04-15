@@ -15,6 +15,8 @@ class MatrixTransformationsApp:
 
         self.BASIS_VECTORS = basis_vectors
 
+        # Potentially able to change this later, for different coordinate systems.
+        self.identity = np.identity(2)
         self.app.layout = self._create_layout()
         self._register_callbacks()
 
@@ -223,7 +225,7 @@ class MatrixTransformationsApp:
                     stored_vectors,
                     previous_vectors)
 
-        def create_frames(start_matrix: np.ndarray = np.identity(2), end_matrix: np.ndarray | None = None, steps: int =10) -> list[Matrix]:
+        def create_frames(end_matrix: np.ndarray, start_matrix: np.ndarray = self.identity, steps: int = 10) -> list[Matrix]:
             """
             Creates interpolation frames from one matrix to another.
             Parameters:
@@ -252,6 +254,11 @@ class MatrixTransformationsApp:
             print("Start:\n", start_matrix, "\nEnd:\n", end_matrix, "\n")
             return [(1 - t) * start_matrix + t * end_matrix
                     for t in np.linspace(0, 1, num=steps + 1)][1:]
+        def update_animations(animation_steps: list[Matrix], end_matrix: np.ndarray, start_matrix: np.ndarray = self.identity, steps: int = 10) -> list[Matrix]:
+            """Returns animation_steps + new_frames."""
+            frames = create_frames(end_matrix=end_matrix, start_matrix=start_matrix, steps=steps)
+            new_steps = animation_steps + frames
+            return new_steps
 
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
@@ -284,7 +291,7 @@ class MatrixTransformationsApp:
                 stored_vectors: Vectors,
                 previous_vectors: list[Vectors],
                 name: str,
-                animation_steps: list[Vectors],
+                animation_steps: list[Matrix],
         ) -> tuple:
             a, b, c, d = set_nonetype_to_zero(a, b, c, d)
 
@@ -301,8 +308,7 @@ class MatrixTransformationsApp:
                 stored_vectors
             )
 
-            frames = create_frames(start_matrix=np.identity(2), end_matrix=most_recent_matrix, steps=10)
-            new_steps = animation_steps.copy() + frames
+            new_steps = update_animations(animation_steps=animation_steps.copy(), end_matrix=most_recent_matrix)
 
             return (stored_matrices,
                     str(stored_matrices),
@@ -326,20 +332,20 @@ class MatrixTransformationsApp:
         )
         def animate_graph(
                 can_animate: bool,
-                animation_frames: list[Matrix],
+                animation_steps: list[Matrix],
                 previous_vectors: list[Vectors]
         ) -> tuple:
-            if (not animation_frames) or (not can_animate):
+            if (not animation_steps) or (not can_animate):
                 return no_update, True, no_update
 
-            current_frame = animation_frames[0]
+            current_frame = animation_steps[0]
             interpolated_vectors = self.apply_matrix_to_vectors(
                 current_frame,
                 previous_vectors[-1]
             )
             return (create_figure(interpolated_vectors),
                     no_update,
-                    animation_frames[1:] if animation_frames else [])
+                    animation_steps[1:] if animation_steps else [])
 
         def generate_unique_matrix_name(name: str, existing_names) -> str:
             def _remove_duplicate_suffix(base_name: str) -> str:
