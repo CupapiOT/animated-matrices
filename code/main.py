@@ -16,7 +16,14 @@ class MatrixTransformationsApp:
         self.BASIS_VECTORS = basis_vectors
 
         # Potentially able to change this later, for different coordinate systems.
-        self.identity = np.identity(2)
+        self.identity: np.ndarray = np.identity(2)
+
+        # Animation timing; implementable via dcc.store in the future.
+        FRAMES_PER_SECOND: int = 12
+        TIME_FOR_ANIMATION_MS: int = 1000
+        self.animation_frames_count: int = FRAMES_PER_SECOND * (TIME_FOR_ANIMATION_MS // 1000)
+        interval_ms = TIME_FOR_ANIMATION_MS / self.animation_frames_count
+        self.interval_ms = max(int(interval_ms), 1)  # Always at least 1ms
 
         self.app.layout = self._create_layout()
         self._register_callbacks()
@@ -226,7 +233,7 @@ class MatrixTransformationsApp:
                     stored_vectors,
                     previous_vectors)
 
-        def create_frames(end_matrix: np.ndarray, start_matrix: np.ndarray = self.identity, steps: int = 10) -> list[Matrix]:
+        def create_frames(end_matrix: np.ndarray, start_matrix: np.ndarray = self.identity, steps: int = self.animation_frames_count) -> list[Matrix]:
             """
             Creates interpolation frames from one matrix to another.
             Parameters:
@@ -249,13 +256,12 @@ class MatrixTransformationsApp:
               Always interpolate from the intended identity matrix to the intended matrix.
             """
 
-            # Sliced with `[1:]` because the first of these frames
-            # would be the initial state, which would not be useful to
-            # the user.
-            print("Start:\n", start_matrix, "\nEnd:\n", end_matrix, "\n")
+            # The first frame is also returned due to it playing an important role
+            # in determining what to animate on the graph.
             return [(1 - t) * start_matrix + t * end_matrix
-                    for t in np.linspace(0, 1, num=steps + 1)][1:]
-        def update_animations(animation_steps: list[Matrix], end_matrix: np.ndarray, start_matrix: np.ndarray = self.identity, steps: int = 10) -> list[Matrix]:
+                    for t in np.linspace(0, 1, num=steps + 1)]
+
+        def update_animations(animation_steps: list[Matrix], end_matrix: np.ndarray, start_matrix: np.ndarray = self.identity, steps: int = self.animation_frames_count) -> list[Matrix]:
             """Returns animation_steps + new_frames."""
             frames = create_frames(end_matrix=end_matrix, start_matrix=start_matrix, steps=steps)
             new_steps = animation_steps + frames
@@ -339,10 +345,17 @@ class MatrixTransformationsApp:
             if (not animation_steps) or (not can_animate):
                 return no_update, True, no_update
 
+            # Reduces lagging when adding more animations before the current one
+            # is finished.
+            vectors_to_animate = previous_vectors[-1]
+            identity_count = sum(np.array_equal(matrix, self.identity) for matrix in animation_steps)
+            if identity_count >= 1 and not np.array_equal(animation_steps[0], self.identity):
+                vectors_to_animate = previous_vectors[-(identity_count + 1)]
+
             current_frame = animation_steps[0]
             interpolated_vectors = self.apply_matrix_to_vectors(
                 current_frame,
-                previous_vectors[-1]
+                vectors_to_animate
             )
             return (create_figure(interpolated_vectors),
                     no_update,
@@ -728,7 +741,7 @@ class MatrixTransformationsApp:
                 dcc.Interval(
                     id='animation-interval',
                     disabled=True,
-                    interval=100,
+                    interval=self.interval_ms,
                     n_intervals=0
                 ),
                 dcc.Store(
