@@ -17,6 +17,7 @@ class MatrixTransformationsApp:
 
         # Potentially able to change this later, for different coordinate systems.
         self.identity = np.identity(2)
+
         self.app.layout = self._create_layout()
         self._register_callbacks()
 
@@ -388,11 +389,13 @@ class MatrixTransformationsApp:
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
             Output('matrix-list', 'children', allow_duplicate=True),
-            Output('graph', 'figure', allow_duplicate=True),
+            # Output('graph', 'figure', allow_duplicate=True),
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
             Output('output-logs', 'children', allow_duplicate=True),
+            Output('animation-interval', 'disabled', allow_duplicate=True),
+            Output('animation-steps', 'data', allow_duplicate=True),
             [Input('inverse-matrix-button', 'n_clicks'),
              State('inverse-matrix-entry-name', 'value'),
              ],
@@ -401,6 +404,8 @@ class MatrixTransformationsApp:
              State('previous-vector-store', 'data'),
              State('undone-matrices-store', 'data'),
              State('output-logs', 'children')
+             ],
+            [State('animation-steps', 'data')
              ],
             prevent_initial_call=True
         )
@@ -411,7 +416,8 @@ class MatrixTransformationsApp:
                 stored_vectors: Vectors,
                 previous_vectors: list[Vectors],
                 undone_matrices: MatrixDict,
-                output_logs: str
+                output_logs: str,
+                animation_steps: list[Matrix]
         ) -> tuple:
             def _validate_input(
                     name: str | None,
@@ -429,7 +435,7 @@ class MatrixTransformationsApp:
                 return True, output_logs_
 
             def _get_last_matrix_name(
-                    stored_matrices_: MatrixDict | tuple | list
+                    stored_matrices_: MatrixDict
             ) -> str:
                 non_inverse_matrices = [
                     key for key in stored_matrices_.keys()
@@ -438,6 +444,7 @@ class MatrixTransformationsApp:
                 return non_inverse_matrices[-1] if (
                     non_inverse_matrices) else tuple(stored_matrices_)[-1]
 
+            # TODO: REFACTOR WITH no_update
             everything_as_they_are = (
                 stored_matrices,
                 str(stored_matrices),
@@ -478,13 +485,18 @@ class MatrixTransformationsApp:
                 stored_vectors
             )
 
+            most_recent_matrix = np.array(stored_matrices[new_name])
+            new_steps = update_animations(animation_steps=animation_steps, end_matrix=most_recent_matrix)
+
             return (stored_matrices,
                     str(stored_matrices),
-                    create_figure(new_vectors),
+                    # create_figure(new_vectors),
                     new_vectors,
                     previous_vectors,
                     {},
-                    new_output_logs)
+                    new_output_logs,
+                    False,
+                    new_steps)
 
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
