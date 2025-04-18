@@ -319,7 +319,7 @@ class MatrixTransformationsApp:
 
             return (stored_matrices,
                     str(stored_matrices),
-                    # no_update,
+                    # create_figure(restored_vectors),
                     new_vectors,
                     previous_vectors,
                     {},
@@ -582,16 +582,20 @@ class MatrixTransformationsApp:
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
             Output('matrix-list', 'children', allow_duplicate=True),
-            Output('graph', 'figure', allow_duplicate=True),
+            # Output('graph', 'figure', allow_duplicate=True),
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
+            Output('animation-interval', 'disabled', allow_duplicate=True),
+            Output('animation-steps', 'data', allow_duplicate=True),
             [Input('redo-matrix-button', 'n_clicks'),
              State('matrix-store', 'data'),
              ],
             [State('vector-store', 'data'),
              State('previous-vector-store', 'data'),
              State('undone-matrices-store', 'data'),
+             ],
+            [State('animation-steps', 'data')
              ],
             prevent_initial_call=True
         )
@@ -600,7 +604,8 @@ class MatrixTransformationsApp:
                 stored_matrices: MatrixDict,
                 stored_vectors: Vectors,
                 previous_vectors: list[Vectors],
-                undone_matrices: MatrixDict
+                undone_matrices: MatrixDict,
+                animation_steps: list[Matrix],
         ) -> tuple:
             # A condition to check for an empty `stored_matrices` is
             # not needed because `undone_matrices` may not be empty
@@ -627,12 +632,16 @@ class MatrixTransformationsApp:
                 stored_vectors
             )
 
+            new_steps = update_animations(animation_steps=animation_steps.copy(), end_matrix=most_recent_matrix)
+
             return (stored_matrices,
                     str(stored_matrices),
-                    create_figure(restored_vectors),
+                    # create_figure(restored_vectors),
                     restored_vectors,
                     previous_vectors,
-                    undone_matrices)
+                    undone_matrices,
+                    False,
+                    new_steps)
 
         @self.app.callback(
             Output('matrix-store', 'data'),
