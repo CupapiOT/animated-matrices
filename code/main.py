@@ -461,7 +461,7 @@ class MatrixTransformationsApp:
             everything_as_they_are = (
                 stored_matrices,
                 str(stored_matrices),
-                create_figure(stored_vectors),
+                # create_figure(stored_vectors),
                 stored_vectors,
                 previous_vectors,
                 undone_matrices,
@@ -473,7 +473,7 @@ class MatrixTransformationsApp:
                 output_logs_=output_logs
             )
             if not valid:
-                return everything_as_they_are + (new_output_logs,)
+                return everything_as_they_are + (new_output_logs, no_update, no_update)
 
             name = matrix_to_invert if matrix_to_invert else (
                 _get_last_matrix_name(stored_matrices))
@@ -483,7 +483,7 @@ class MatrixTransformationsApp:
             if inverted_matrix is None:
                 log = f'Matrix "{name}" does not have an inverse. '
                 new_output_logs += log
-                return everything_as_they_are + (new_output_logs,)
+                return everything_as_they_are + (new_output_logs, no_update, no_update)
 
             inverse_name = 'I_' + name
             new_name = generate_unique_matrix_name(
@@ -538,13 +538,16 @@ class MatrixTransformationsApp:
                 output_logs: str
         ) -> tuple:
             if not stored_matrices:
+                # TODO: REFACTOR WITH no_update
                 return (stored_matrices,
                         '',
                         create_figure(stored_vectors),
                         stored_vectors,
                         previous_vectors,
                         undone_matrices,
-                        output_logs)
+                        output_logs,
+                        no_update,
+                        no_update,)
 
             new_stored_matrices = stored_matrices.copy()
             new_stored_vectors = stored_vectors.copy()
@@ -611,13 +614,16 @@ class MatrixTransformationsApp:
             # not needed because `undone_matrices` may not be empty
             # while `stored_matrices` is empty, but if `undone_matrices`
             # is empty, then `stored_matrices` is for sure empty too.
+            # TODO: Refactor with no-update.
             if not undone_matrices:
                 return (stored_matrices,
                         str(stored_matrices) if stored_matrices else '',
-                        create_figure(stored_vectors),
+                        # create_figure(stored_vectors),
                         stored_vectors,
                         previous_vectors,
-                        undone_matrices)
+                        undone_matrices,
+                        no_update,
+                        no_update)
 
             last_undone_matrix_name = list(undone_matrices.keys())[-1]
             stored_matrices[last_undone_matrix_name] = undone_matrices.pop(
@@ -693,7 +699,7 @@ class MatrixTransformationsApp:
             everything_as_they_are = (
                 stored_matrices,
                 str(stored_matrices),
-                create_figure(stored_vectors),
+                # create_figure(stored_vectors),
                 stored_vectors,
                 previous_vectors,
                 undone_matrices,
@@ -705,7 +711,7 @@ class MatrixTransformationsApp:
                 output_logs_=output_logs
             )
             if not valid:
-                return everything_as_they_are + (new_output_logs,)
+                return everything_as_they_are + (new_output_logs,) + (no_update, no_update)
 
             if not selected_matrix:
                 selected_matrix = list(stored_matrices.keys())[-1]
