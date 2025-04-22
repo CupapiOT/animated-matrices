@@ -1,5 +1,5 @@
 import numpy as np
-from dash import Dash, dcc, html
+from dash import Dash, callback_context, dcc, html, no_update, ALL
 from dash.dependencies import Input, Output, State
 import re
 from constants import *
@@ -14,6 +14,16 @@ class MatrixTransformationsApp:
         self.app = Dash('Matrix Transformations')
 
         self.BASIS_VECTORS = basis_vectors
+
+        # Potentially able to change this later, for different coordinate systems.
+        self.identity: np.ndarray = np.identity(2)
+
+        # Animation timing; implementable via dcc.store in the future.
+        FRAMES_PER_SECOND: int = 12
+        TIME_FOR_ANIMATION_MS: int = 1000
+        self.animation_frames_count: int = FRAMES_PER_SECOND * (TIME_FOR_ANIMATION_MS // 1000)
+        interval_ms = TIME_FOR_ANIMATION_MS / self.animation_frames_count
+        self.interval_ms = max(int(interval_ms), 1)  # Always at least 1ms
 
         self.app.layout = self._create_layout()
         self._register_callbacks()
@@ -132,12 +142,12 @@ class MatrixTransformationsApp:
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('output-logs', 'children', allow_duplicate=True),
-            [Input('add-vector-button', 'n_clicks'),
-             State('vector-entry-1', 'value'),
-             State('vector-entry-2', 'value'),
-             State('vector-entry-color', 'value'),
+            [Input({'type': 'interactable', 'name': 'add-vector-button'}, 'n_clicks'),
+             State({'type': 'interactable', 'name': 'vector-entry-1'}, 'value'),
+             State({'type': 'interactable', 'name': 'vector-entry-2'}, 'value'),
+             State({'type': 'interactable', 'name': 'vector-entry-color'}, 'value'),
              State('vector-store', 'data'),
-             State('new-vector-entry-name', 'value'),
+             State({'type': 'interactable', 'name': 'new-vector-entry-name'}, 'value'),
              ],
             # Separated list to indicate that the below is for a
             # different part of the function.
@@ -160,7 +170,7 @@ class MatrixTransformationsApp:
         ) -> tuple:
             x, y = _vector_getter(x_val, y_val)
             vector_name = name if name else (LOWER_LETTERS[n_clicks % 26 - 1])
-            stored_vectors[vector_name] = [[x, y], color]
+            stored_vectors[vector_name] = [(x, y), color]
             if not previous_vectors:
                 return (create_figure(stored_vectors),
                         stored_vectors,
@@ -189,8 +199,8 @@ class MatrixTransformationsApp:
             Output('graph', 'figure', allow_duplicate=True),
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
-            [Input('delete-vector-button', 'n_clicks'),
-             State('delete-vector-entry-name', 'value')
+            [Input({'type': 'interactable', 'name': 'delete-vector-button'}, 'n_clicks'),
+             State({'type': 'interactable', 'name': 'delete-vector-entry-name'}, 'value')
              ],
             # This time the separated list to indicate that the below
             # is for not for the main inputs of the function.
@@ -223,23 +233,61 @@ class MatrixTransformationsApp:
                     stored_vectors,
                     previous_vectors)
 
+        def create_frames(end_matrix: np.ndarray, start_matrix: np.ndarray = self.identity, steps: int = self.animation_frames_count) -> list[Matrix]:
+            """
+            Creates interpolation frames from one matrix to another.
+            Parameters:
+            - start_matrix: Any matrix. Usually the identity matrix, details below.
+            - end_matrix: Any matrix.
+            - steps: The number of interpolated frames to return.
+            Returns:
+            - A list of matrices containing the interpolated matrices.
+
+            IMPORTANT:
+              When generating animation frames, we interpolate from the identity matrix
+              to the matrix being applied. This is because the animation applies each
+              intermediate matrix to the CURRENT positions of the vectors on the graph.
+             
+              This means we must not interpolate from the last matrix applied.
+              Doing so creates either:
+              - a zero-difference (no animation if matrices are equal), or
+              - unintended compound transformations (exponential growth when chaining).
+             
+              Always interpolate from the intended identity matrix to the intended matrix.
+            """
+
+            # The first frame is also returned for future compatibility for
+            # exporting animations.
+            return [(1 - t) * start_matrix + t * end_matrix
+                    for t in np.linspace(0, 1, num=steps + 1)]
+
+        def update_animations(animation_steps: list[Matrix], end_matrix: np.ndarray, start_matrix: np.ndarray = self.identity, steps: int = self.animation_frames_count) -> list[Matrix]:
+            """Returns animation_steps + new_frames."""
+            frames = create_frames(end_matrix=end_matrix, start_matrix=start_matrix, steps=steps)
+            new_steps = animation_steps + frames
+            return new_steps
+
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
             Output('matrix-list', 'children', allow_duplicate=True),
-            Output('graph', 'figure', allow_duplicate=True),
+            # Output('graph', 'figure', allow_duplicate=True),
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
-            [Input('add-matrix-button', 'n_clicks'),
-             State('matrix-entry-1', 'value'),
-             State('matrix-entry-2', 'value'),
-             State('matrix-entry-3', 'value'),
-             State('matrix-entry-4', 'value')
+            Output('animation-interval', 'disabled', allow_duplicate=True),
+            Output('animation-steps', 'data', allow_duplicate=True),
+            [Input({'type': 'interactable', 'name': 'add-matrix-button'}, 'n_clicks'),
+             State({'type': 'interactable', 'name': 'matrix-entry-1'}, 'value'),
+             State({'type': 'interactable', 'name': 'matrix-entry-2'}, 'value'),
+             State({'type': 'interactable', 'name': 'matrix-entry-3'}, 'value'),
+             State({'type': 'interactable', 'name': 'matrix-entry-4'}, 'value')
              ],
             [State('matrix-store', 'data'),
              State('vector-store', 'data'),
              State('previous-vector-store', 'data'),
-             State('new-matrix-entry-name', 'value'),
+             State({'type': 'interactable', 'name': 'new-matrix-entry-name'}, 'value'),
+             ],
+            [State('animation-steps', 'data')
              ],
             prevent_initial_call=True
         )
@@ -250,6 +298,7 @@ class MatrixTransformationsApp:
                 stored_vectors: Vectors,
                 previous_vectors: list[Vectors],
                 name: str,
+                animation_steps: list[Matrix],
         ) -> tuple:
             a, b, c, d = set_nonetype_to_zero(a, b, c, d)
 
@@ -266,12 +315,61 @@ class MatrixTransformationsApp:
                 stored_vectors
             )
 
+            new_steps = update_animations(animation_steps=animation_steps.copy(), end_matrix=most_recent_matrix)
+
             return (stored_matrices,
                     str(stored_matrices),
-                    create_figure(new_vectors),
+                    # create_figure(restored_vectors),
                     new_vectors,
                     previous_vectors,
-                    {})
+                    {},
+                    False,
+                    new_steps)
+
+        @self.app.callback(
+            Output('graph', 'figure', allow_duplicate=True),
+            Output('animation-interval', 'disabled'),
+            Output('animation-steps', 'data'),
+            [Input('animation-interval', 'n_intervals'),
+             State('animation-steps', 'data')
+             ],
+            [State('previous-vector-store', 'data')
+             ],
+            prevent_initial_call=True
+        )
+        def animate_graph(
+                _,
+                animation_steps: list[Matrix],
+                previous_vectors: list[Vectors]
+        ) -> tuple:
+            if not animation_steps:
+                return no_update, True, no_update
+
+            vectors_to_animate = previous_vectors[-1]
+            current_frame = animation_steps[0]
+            interpolated_vectors = self.apply_matrix_to_vectors(
+                current_frame,
+                vectors_to_animate
+            )
+            return (create_figure(interpolated_vectors),
+                    no_update,
+                    animation_steps[1:] if animation_steps else [])
+
+        @self.app.callback(
+            Output({'type': 'interactable', 'name': ALL}, 'disabled'),
+            [Input('animation-interval', 'disabled')
+             ]
+        )
+        def disable_while_animating(
+            # Double negative in the name due to the nature of the trait 'disabled'.
+            is_not_animating: bool
+        ) -> tuple:
+            """Disables and enables any interactable component (e.g.: button,
+            entry) based on if an animation is ongoing.
+            """
+            amount_of_interactables: int = len(callback_context.outputs_list)
+            is_animating = not is_not_animating
+            return (is_animating,) * amount_of_interactables
 
         def generate_unique_matrix_name(name: str, existing_names) -> str:
             def _remove_duplicate_suffix(base_name: str) -> str:
@@ -314,19 +412,23 @@ class MatrixTransformationsApp:
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
             Output('matrix-list', 'children', allow_duplicate=True),
-            Output('graph', 'figure', allow_duplicate=True),
+            # Output('graph', 'figure', allow_duplicate=True),
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
             Output('output-logs', 'children', allow_duplicate=True),
-            [Input('inverse-matrix-button', 'n_clicks'),
-             State('inverse-matrix-entry-name', 'value'),
+            Output('animation-interval', 'disabled', allow_duplicate=True),
+            Output('animation-steps', 'data', allow_duplicate=True),
+            [Input({'type': 'interactable', 'name': 'inverse-matrix-button'}, 'n_clicks'),
+             State({'type': 'interactable', 'name': 'inverse-matrix-entry-name'}, 'value'),
              ],
             [State('matrix-store', 'data'),
              State('vector-store', 'data'),
              State('previous-vector-store', 'data'),
              State('undone-matrices-store', 'data'),
              State('output-logs', 'children')
+             ],
+            [State('animation-steps', 'data')
              ],
             prevent_initial_call=True
         )
@@ -337,7 +439,8 @@ class MatrixTransformationsApp:
                 stored_vectors: Vectors,
                 previous_vectors: list[Vectors],
                 undone_matrices: MatrixDict,
-                output_logs: str
+                output_logs: str,
+                animation_steps: list[Matrix]
         ) -> tuple:
             def _validate_input(
                     name: str | None,
@@ -355,7 +458,7 @@ class MatrixTransformationsApp:
                 return True, output_logs_
 
             def _get_last_matrix_name(
-                    stored_matrices_: MatrixDict | tuple | list
+                    stored_matrices_: MatrixDict
             ) -> str:
                 non_inverse_matrices = [
                     key for key in stored_matrices_.keys()
@@ -364,10 +467,11 @@ class MatrixTransformationsApp:
                 return non_inverse_matrices[-1] if (
                     non_inverse_matrices) else tuple(stored_matrices_)[-1]
 
+            # TODO: REFACTOR WITH no_update
             everything_as_they_are = (
                 stored_matrices,
                 str(stored_matrices),
-                create_figure(stored_vectors),
+                # create_figure(stored_vectors),
                 stored_vectors,
                 previous_vectors,
                 undone_matrices,
@@ -379,7 +483,7 @@ class MatrixTransformationsApp:
                 output_logs_=output_logs
             )
             if not valid:
-                return everything_as_they_are + (new_output_logs,)
+                return everything_as_they_are + (new_output_logs, no_update, no_update)
 
             name = matrix_to_invert if matrix_to_invert else (
                 _get_last_matrix_name(stored_matrices))
@@ -389,7 +493,7 @@ class MatrixTransformationsApp:
             if inverted_matrix is None:
                 log = f'Matrix "{name}" does not have an inverse. '
                 new_output_logs += log
-                return everything_as_they_are + (new_output_logs,)
+                return everything_as_they_are + (new_output_logs, no_update, no_update)
 
             inverse_name = 'I_' + name
             new_name = generate_unique_matrix_name(
@@ -404,13 +508,18 @@ class MatrixTransformationsApp:
                 stored_vectors
             )
 
+            most_recent_matrix = np.array(stored_matrices[new_name])
+            new_steps = update_animations(animation_steps=animation_steps, end_matrix=most_recent_matrix)
+
             return (stored_matrices,
                     str(stored_matrices),
-                    create_figure(new_vectors),
+                    # create_figure(new_vectors),
                     new_vectors,
                     previous_vectors,
                     {},
-                    new_output_logs)
+                    new_output_logs,
+                    False,
+                    new_steps)
 
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
@@ -420,7 +529,7 @@ class MatrixTransformationsApp:
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
             Output('output-logs', 'children', allow_duplicate=True),
-            [Input('undo-matrix-button', 'n_clicks'),
+            [Input({'type': 'interactable', 'name': 'undo-matrix-button'}, 'n_clicks'),
              State('matrix-store', 'data'),
              ],
             [State('vector-store', 'data'),
@@ -439,6 +548,7 @@ class MatrixTransformationsApp:
                 output_logs: str
         ) -> tuple:
             if not stored_matrices:
+                # TODO: REFACTOR WITH no_update
                 return (stored_matrices,
                         '',
                         create_figure(stored_vectors),
@@ -483,16 +593,20 @@ class MatrixTransformationsApp:
         @self.app.callback(
             Output('matrix-store', 'data', allow_duplicate=True),
             Output('matrix-list', 'children', allow_duplicate=True),
-            Output('graph', 'figure', allow_duplicate=True),
+            # Output('graph', 'figure', allow_duplicate=True),
             Output('vector-store', 'data', allow_duplicate=True),
             Output('previous-vector-store', 'data', allow_duplicate=True),
             Output('undone-matrices-store', 'data', allow_duplicate=True),
-            [Input('redo-matrix-button', 'n_clicks'),
+            Output('animation-interval', 'disabled', allow_duplicate=True),
+            Output('animation-steps', 'data', allow_duplicate=True),
+            [Input({'type': 'interactable', 'name': 'redo-matrix-button'}, 'n_clicks'),
              State('matrix-store', 'data'),
              ],
             [State('vector-store', 'data'),
              State('previous-vector-store', 'data'),
              State('undone-matrices-store', 'data'),
+             ],
+            [State('animation-steps', 'data')
              ],
             prevent_initial_call=True
         )
@@ -501,19 +615,23 @@ class MatrixTransformationsApp:
                 stored_matrices: MatrixDict,
                 stored_vectors: Vectors,
                 previous_vectors: list[Vectors],
-                undone_matrices: MatrixDict
+                undone_matrices: MatrixDict,
+                animation_steps: list[Matrix],
         ) -> tuple:
             # A condition to check for an empty `stored_matrices` is
             # not needed because `undone_matrices` may not be empty
             # while `stored_matrices` is empty, but if `undone_matrices`
             # is empty, then `stored_matrices` is for sure empty too.
+            # TODO: Refactor with no-update.
             if not undone_matrices:
                 return (stored_matrices,
                         str(stored_matrices) if stored_matrices else '',
-                        create_figure(stored_vectors),
+                        # create_figure(stored_vectors),
                         stored_vectors,
                         previous_vectors,
-                        undone_matrices)
+                        undone_matrices,
+                        no_update,
+                        no_update)
 
             last_undone_matrix_name = list(undone_matrices.keys())[-1]
             stored_matrices[last_undone_matrix_name] = undone_matrices.pop(
@@ -528,29 +646,37 @@ class MatrixTransformationsApp:
                 stored_vectors
             )
 
+            new_steps = update_animations(animation_steps=animation_steps.copy(), end_matrix=most_recent_matrix)
+
             return (stored_matrices,
                     str(stored_matrices),
-                    create_figure(restored_vectors),
+                    # create_figure(restored_vectors),
                     restored_vectors,
                     previous_vectors,
-                    undone_matrices)
+                    undone_matrices,
+                    False,
+                    new_steps)
 
         @self.app.callback(
             Output('matrix-store', 'data'),
             Output('matrix-list', 'children'),
-            Output('graph', 'figure'),
+            # Output('graph', 'figure'),
             Output('vector-store', 'data'),
             Output('previous-vector-store', 'data'),
             Output('undone-matrices-store', 'data'),
             Output('output-logs', 'children'),
-            [Input('repeat-matrix-button', 'n_clicks'),
-             State('repeat-matrix-entry-name', 'value'),
+            Output('animation-interval', 'disabled', allow_duplicate=True),
+            Output('animation-steps', 'data', allow_duplicate=True),
+            [Input({'type': 'interactable', 'name': 'repeat-matrix-button'}, 'n_clicks'),
+             State({'type': 'interactable', 'name': 'repeat-matrix-entry-name'}, 'value'),
              ],
             [State('matrix-store', 'data'),
              State('vector-store', 'data'),
              State('previous-vector-store', 'data'),
              State('undone-matrices-store', 'data'),
              State('output-logs', 'children'),
+             ],
+            [State('animation-steps', 'data')
              ],
             prevent_initial_call=True
         )
@@ -561,7 +687,8 @@ class MatrixTransformationsApp:
                 stored_vectors: Vectors,
                 previous_vectors: list[Vectors],
                 undone_matrices: MatrixDict,
-                output_logs: str
+                output_logs: str,
+                animation_steps: list[Matrix]
         ) -> tuple:
             def _validate_input(
                     name: str | None,
@@ -576,10 +703,11 @@ class MatrixTransformationsApp:
                     return False, output_logs_
                 return True, output_logs_
 
+            # TODO: Refactor with no-update
             everything_as_they_are = (
                 stored_matrices,
                 str(stored_matrices),
-                create_figure(stored_vectors),
+                # create_figure(stored_vectors),
                 stored_vectors,
                 previous_vectors,
                 undone_matrices,
@@ -591,7 +719,7 @@ class MatrixTransformationsApp:
                 output_logs_=output_logs
             )
             if not valid:
-                return everything_as_they_are + (new_output_logs,)
+                return everything_as_they_are + (new_output_logs,) + (no_update, no_update)
 
             if not selected_matrix:
                 selected_matrix = list(stored_matrices.keys())[-1]
@@ -608,19 +736,24 @@ class MatrixTransformationsApp:
                 stored_vectors
             )
 
+            most_recent_matrix = np.array(list(stored_matrices.values())[-1])
+            new_steps = update_animations(animation_steps=animation_steps.copy(), end_matrix=most_recent_matrix)
+
             return (stored_matrices,
                     str(stored_matrices),
-                    create_figure(new_vectors),
+                    # create_figure(new_vectors),
                     new_vectors,
                     previous_vectors,
                     {},
-                    output_logs)
+                    output_logs,
+                    False,
+                    new_steps)
 
         @self.app.callback(
-            Output('add-vector-button', 'children'),
-            [Input('new-vector-entry-name', 'value'),
+            Output({'type': 'interactable', 'name': 'add-vector-button'}, 'children'),
+            [Input({'type': 'interactable', 'name': 'new-vector-entry-name'}, 'value'),
              Input('vector-store', 'data'),
-             State('add-vector-button', 'n_clicks')],
+             State({'type': 'interactable', 'name': 'add-vector-button'}, 'n_clicks')],
             prevent_initial_call=True
         )
         def _change_vector_button_name(
@@ -639,6 +772,16 @@ class MatrixTransformationsApp:
         return html.Div([
             html.H1('Matrix Visualizer'),
             html.Div([
+                dcc.Interval(
+                    id='animation-interval',
+                    disabled=True,
+                    interval=self.interval_ms,
+                    n_intervals=0
+                ),
+                dcc.Store(
+                    id='animation-steps',
+                    data=[]
+                ),
                 dcc.Graph(id='graph',
                           figure=create_2d_basis_vectors(self.BASIS_VECTORS),
                           style={'height': '1000%',
@@ -649,7 +792,7 @@ class MatrixTransformationsApp:
                     dcc.Store(id='vector-store', data={**self.BASIS_VECTORS}),
                     html.Div([
                         dcc.Input(
-                            id='vector-entry-1',
+                            id={'type': 'interactable', 'name': 'vector-entry-1'}, className='interactable',
                             type='number',
                             style={'marginBottom': '10px',
                                    'width': '45%',
@@ -657,7 +800,7 @@ class MatrixTransformationsApp:
                             placeholder='x',
                         ),
                         dcc.Input(
-                            id='vector-entry-2',
+                            id={'type': 'interactable', 'name': 'vector-entry-2'}, className='interactable',
                             type='number',
                             style={'marginBottom': '10px', 'width': '45%'},
                             size='2',
@@ -670,7 +813,7 @@ class MatrixTransformationsApp:
                               'justifyContent': 'center'}),
                     html.Div([
                         dcc.Input(
-                            id='new-vector-entry-name',
+                            id={'type': 'interactable', 'name': 'new-vector-entry-name'}, className='interactable',
                             type='text',
                             style={'marginRight': '5%',
                                    'marginBottom': '5%',
@@ -679,7 +822,7 @@ class MatrixTransformationsApp:
                             placeholder='Name'),
                         html.Button(
                             children='Add Vector',
-                            id='add-vector-button',
+                            id={'type': 'interactable', 'name': 'add-vector-button'}, className='interactable',
                             style={'marginBottom': '5%',
                                    'width': '70%'},
                             n_clicks=0
@@ -691,7 +834,7 @@ class MatrixTransformationsApp:
                               'justifyContent': 'center'}),
                     html.Div([
                         dcc.Dropdown(
-                            id='vector-entry-color',
+                            id={'type': 'interactable', 'name': 'vector-entry-color'}, className='interactable',
                             options=[{'label': color.capitalize(),
                                       'value': color}
                                      for color in COLORS],
@@ -703,7 +846,7 @@ class MatrixTransformationsApp:
                     ]),
                     html.Div([
                         dcc.Input(
-                            id='delete-vector-entry-name',
+                            id={'type': 'interactable', 'name': 'delete-vector-entry-name'}, className='interactable',
                             type='text',
                             style={'marginRight': '5%',
                                    'marginBottom': '5%',
@@ -713,7 +856,7 @@ class MatrixTransformationsApp:
                         ),
                         html.Button(
                             'Delete Vector',
-                            id='delete-vector-button',
+                            id={'type': 'interactable', 'name': 'delete-vector-button'}, className='interactable',
                             style={'marginBottom': '5%',
                                    'width': '70%'}
                         ),
@@ -730,7 +873,7 @@ class MatrixTransformationsApp:
                     html.Div([
                         html.Div([
                             dcc.Input(
-                                id='matrix-entry-1',
+                                id={'type': 'interactable', 'name': 'matrix-entry-1'}, className='interactable',
                                 type='number',
                                 style={'marginBottom': '10px',
                                        'marginRight': '10px',
@@ -739,7 +882,7 @@ class MatrixTransformationsApp:
                                 placeholder='a'
                             ),
                             dcc.Input(
-                                id='matrix-entry-2',
+                                id={'type': 'interactable', 'name': 'matrix-entry-2'}, className='interactable',
                                 type='number',
                                 style={'marginBottom': '10px',
                                        'width': '80px'},
@@ -748,7 +891,7 @@ class MatrixTransformationsApp:
                         ]),
                         html.Div([
                             dcc.Input(
-                                id='matrix-entry-3',
+                                id={'type': 'interactable', 'name': 'matrix-entry-3'}, className='interactable',
                                 type='number',
                                 style={'marginBottom': '10px',
                                        'marginRight': '10px',
@@ -757,7 +900,7 @@ class MatrixTransformationsApp:
                                 placeholder='c'
                             ),
                             dcc.Input(
-                                id='matrix-entry-4',
+                                id={'type': 'interactable', 'name': 'matrix-entry-4'}, className='interactable',
                                 type='number',
                                 style={'marginBottom': '10px',
                                        'width': '80px'},
@@ -767,7 +910,7 @@ class MatrixTransformationsApp:
                         ]),
                         html.Div([
                             dcc.Input(
-                                id='new-matrix-entry-name',
+                                id={'type': 'interactable', 'name': 'new-matrix-entry-name'}, className='interactable',
                                 type='text',
                                 style={'width': '20%', 'marginRight': '5%'},
                                 size='2',
@@ -775,7 +918,7 @@ class MatrixTransformationsApp:
                             ),
                             html.Button(
                                 'Add Matrix',
-                                id='add-matrix-button',
+                                id={'type': 'interactable', 'name': 'add-matrix-button'}, className='interactable',
                                 n_clicks=0,
                                 style={'width': '70%'}
                             ),
@@ -791,7 +934,7 @@ class MatrixTransformationsApp:
 
                         html.Div([
                             dcc.Input(
-                                id='inverse-matrix-entry-name',
+                                id={'type': 'interactable', 'name': 'inverse-matrix-entry-name'}, className='interactable',
                                 type='text',
                                 style={'width': '20%', 'marginRight': '5%'},
                                 size='2',
@@ -799,7 +942,7 @@ class MatrixTransformationsApp:
                             ),
                             html.Button(
                                 'Apply Inverse',
-                                id='inverse-matrix-button',
+                                id={'type': 'interactable', 'name': 'inverse-matrix-button'}, className='interactable',
                                 n_clicks=0,
                                 style={'width': '70%'}
                             )
@@ -820,14 +963,14 @@ class MatrixTransformationsApp:
                             ),
                             html.Button(
                                 'Undo Last Matrix',
-                                id='undo-matrix-button',
+                                id={'type': 'interactable', 'name': 'undo-matrix-button'}, className='interactable',
                                 n_clicks=0,
                                 style={'width': '100%', 'marginBottom': '5%'},
                             ),
                             dcc.Store(id='undone-matrices-store', data={}),
                             html.Button(
                                 'Redo Last Matrix',
-                                id='redo-matrix-button',
+                                id={'type': 'interactable', 'name': 'redo-matrix-button'}, className='interactable',
                                 n_clicks=0,
                                 style={'width': '100%'},
                             ),
@@ -837,7 +980,7 @@ class MatrixTransformationsApp:
                                            'width': '100%'}),
                             html.Div([
                                 dcc.Input(
-                                    id='repeat-matrix-entry-name',
+                                    id={'type': 'interactable', 'name': 'repeat-matrix-entry-name'}, className='interactable',
                                     type='text',
                                     style={'width': '20%',
                                            'marginRight': '5%'},
@@ -846,7 +989,7 @@ class MatrixTransformationsApp:
                                 ),
                                 html.Button(
                                     'Repeat Matrix',
-                                    id='repeat-matrix-button',
+                                    id={'type': 'interactable', 'name': 'repeat-matrix-button'}, className='interactable',
                                     n_clicks=0,
                                     style={'width': '70%'},
                                 )
