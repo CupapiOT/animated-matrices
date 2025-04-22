@@ -341,7 +341,7 @@ class MatrixTransformationsApp:
                 # create_figure(restored_vectors),
                 new_vectors,
                 previous_vectors,
-                {},
+                {},  # Empty undone matrices.
                 False,
                 new_steps,
             )
@@ -452,7 +452,6 @@ class MatrixTransformationsApp:
                 State("matrix-store", "data"),
                 State("vector-store", "data"),
                 State("previous-vector-store", "data"),
-                State("undone-matrices-store", "data"),
                 State("output-logs", "children"),
             ],
             [State("animation-steps", "data")],
@@ -464,7 +463,6 @@ class MatrixTransformationsApp:
             stored_matrices: MatrixDict,
             stored_vectors: Vectors,
             previous_vectors: list[Vectors],
-            undone_matrices: MatrixDict,
             output_logs: str,
             animation_steps: list[Matrix],
         ) -> tuple:
@@ -492,23 +490,13 @@ class MatrixTransformationsApp:
                     else tuple(stored_matrices_)[-1]
                 )
 
-            # TODO: REFACTOR WITH no_update
-            everything_as_they_are = (
-                stored_matrices,
-                str(stored_matrices),
-                # create_figure(stored_vectors),
-                stored_vectors,
-                previous_vectors,
-                undone_matrices,
-            )
-
             valid, new_output_logs = _validate_input(
                 name=matrix_to_invert,
                 stored_matrices_=stored_matrices,
                 output_logs_=output_logs,
             )
             if not valid:
-                return everything_as_they_are + (new_output_logs, no_update, no_update)
+                return (no_update,) * 5 + (new_output_logs,) + (no_update,) * 2
 
             name = (
                 matrix_to_invert
@@ -521,7 +509,7 @@ class MatrixTransformationsApp:
             if inverted_matrix is None:
                 log = f'Matrix "{name}" does not have an inverse. '
                 new_output_logs += log
-                return everything_as_they_are + (new_output_logs, no_update, no_update)
+                return (no_update,) * 5 + (new_output_logs,) + (no_update,) * 2
 
             inverse_name = "I_" + name
             new_name = generate_unique_matrix_name(
@@ -543,7 +531,7 @@ class MatrixTransformationsApp:
                 # create_figure(new_vectors),
                 new_vectors,
                 previous_vectors,
-                {},
+                {},  # Empty undone matrices.
                 new_output_logs,
                 False,
                 new_steps,
@@ -580,16 +568,7 @@ class MatrixTransformationsApp:
             output_logs: str,
         ) -> tuple:
             if not stored_matrices:
-                # TODO: REFACTOR WITH no_update
-                return (
-                    stored_matrices,
-                    "",
-                    create_figure(stored_vectors),
-                    stored_vectors,
-                    previous_vectors,
-                    undone_matrices,
-                    output_logs,
-                )
+                return (no_update,) * 7
 
             new_stored_matrices = stored_matrices.copy()
             new_stored_vectors = stored_vectors.copy()
@@ -659,18 +638,8 @@ class MatrixTransformationsApp:
             # not needed because `undone_matrices` may not be empty
             # while `stored_matrices` is empty, but if `undone_matrices`
             # is empty, then `stored_matrices` is for sure empty too.
-            # TODO: Refactor with no-update.
             if not undone_matrices:
-                return (
-                    stored_matrices,
-                    str(stored_matrices) if stored_matrices else "",
-                    # create_figure(stored_vectors),
-                    stored_vectors,
-                    previous_vectors,
-                    undone_matrices,
-                    no_update,
-                    no_update,
-                )
+                return (no_update,) * 7
 
             last_undone_matrix_name = list(undone_matrices.keys())[-1]
             stored_matrices[last_undone_matrix_name] = undone_matrices.pop(
@@ -722,7 +691,6 @@ class MatrixTransformationsApp:
                 State("matrix-store", "data"),
                 State("vector-store", "data"),
                 State("previous-vector-store", "data"),
-                State("undone-matrices-store", "data"),
                 State("output-logs", "children"),
             ],
             [State("animation-steps", "data")],
@@ -734,7 +702,6 @@ class MatrixTransformationsApp:
             stored_matrices: MatrixDict,
             stored_vectors: Vectors,
             previous_vectors: list[Vectors],
-            undone_matrices: MatrixDict,
             output_logs: str,
             animation_steps: list[Matrix],
         ) -> tuple:
@@ -751,25 +718,13 @@ class MatrixTransformationsApp:
                     return False, output_logs_
                 return True, output_logs_
 
-            # TODO: Refactor with no-update
-            everything_as_they_are = (
-                stored_matrices,
-                str(stored_matrices),
-                # create_figure(stored_vectors),
-                stored_vectors,
-                previous_vectors,
-                undone_matrices,
-            )
-
             valid, new_output_logs = _validate_input(
                 name=selected_matrix,
                 stored_matrices_=stored_matrices,
                 output_logs_=output_logs,
             )
             if not valid:
-                return (
-                    everything_as_they_are + (new_output_logs,) + (no_update, no_update)
-                )
+                return (no_update,) * 5 + (new_output_logs,) + (no_update,) * 2
 
             if not selected_matrix:
                 selected_matrix = list(stored_matrices.keys())[-1]
@@ -793,7 +748,7 @@ class MatrixTransformationsApp:
                 # create_figure(new_vectors),
                 new_vectors,
                 previous_vectors,
-                {},
+                {},  # Empty undone matrices.
                 output_logs,
                 False,
                 new_steps,
