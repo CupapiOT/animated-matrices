@@ -10,8 +10,8 @@ def create_2d_basis_vectors(
     fig = Figure()
 
     fig.add_trace(Scatter(
-        x=[0, basis_vectors['i-hat'][0][0]],
-        y=[0, basis_vectors['i-hat'][0][1]],
+        x=[0, basis_vectors['i-hat'].coords[0]],
+        y=[0, basis_vectors['i-hat'].coords[1]],
         mode='lines+markers+text',
         text=['', 'i-hat'],
         textposition='top center',
@@ -20,8 +20,8 @@ def create_2d_basis_vectors(
     ))
 
     fig.add_trace(Scatter(
-        x=[0, basis_vectors['j-hat'][0][0]],
-        y=[0, basis_vectors['j-hat'][0][1]],
+        x=[0, basis_vectors['j-hat'].coords[0]],
+        y=[0, basis_vectors['j-hat'].coords[1]],
         mode='lines+markers+text',
         text=['', 'j-hat'],
         textposition='top center',
@@ -37,14 +37,14 @@ def create_2d_basis_vectors(
 def create_figure(vectors: Vectors) -> Figure:
     fig = Figure()
 
-    for name, ((x, y), color) in vectors.items():
+    for name, vector in vectors.items():
         fig.add_trace(Scatter(
-            x=[0, x],
-            y=[0, y],
+            x=[0, vector.coords[0]],
+            y=[0, vector.coords[1]],
             mode='lines+markers+text',
             text=['', name],
             textposition='top center',
-            line=dict(color=color),
+            line=dict(color=vector.color),
             name=name
         ))
 
