@@ -58,7 +58,7 @@ def _update_fig_layout(fig) -> None:
         title='Graph',
         xaxis_title='',
         yaxis_title='',
-        xaxis=dict(range=[-5, 5]),
-        yaxis=dict(range=[-5, 5], scaleanchor='x'),
+        xaxis=dict(range=[-10, 10]),
+        yaxis=dict(range=[-10, 10], scaleanchor='x'),
         showlegend=True
     )
