@@ -99,32 +99,40 @@ class MatrixTransformationsApp:
                     break
                 inverse_matrix = safe_inverse(its_matrix)
                 if inverse_matrix is not None:
-                    edited_vector = (
+                    edited_vector_coords = (
                         np.array([x, y])
                         if (previous_vectors_temp is None)
                         else (previous_vectors_temp)
                     )
-                    inverted_edited_vector_vals = inverse_matrix @ edited_vector
-                    previous_vectors_temp = inverted_edited_vector_vals.copy()
-                    inverted_edited_vector = [
-                        inverted_edited_vector_vals.tolist(),
-                        color,
-                    ]
+                    inverted_edited_vector_coords = inverse_matrix @ edited_vector_coords
+                    previous_vectors_temp = inverted_edited_vector_coords.copy()
+                    inverted_edited_vector_tuple = tuple(
+                        inverted_edited_vector_coords.tolist()
+                    )
+                    inverted_edited_vector = Vector(inverted_edited_vector_tuple, color)
                     vectors[vector_name] = inverted_edited_vector
                 else:
                     if previous_vectors_temp is not None:
-                        previous_vectors_temp_vector = [
-                            previous_vectors_temp.tolist(),
-                            color,
-                        ]
+                        previous_vectors_temp_vector = Vector(
+                            tuple(previous_vectors_temp.tolist()), color
+                        )
+                        # previous_vectors_temp_vector = [
+                        #     previous_vectors_temp.tolist(),
+                        #     color,
+                        # ]
                     else:
                         previous_vectors_temp_vector = None
-                    edited_vector = (
-                        [(x, y), color]
+                    edited_vector_coords = (
+                        Vector((x, y), color)
                         if (previous_vectors_temp_vector is None)
                         else (previous_vectors_temp_vector)
                     )
-                    vectors[vector_name] = edited_vector
+                    # edited_vector = (
+                    #     [(x, y), color]
+                    #     if (previous_vectors_temp_vector is None)
+                    #     else (previous_vectors_temp_vector)
+                    # )
+                    vectors[vector_name] = edited_vector_coords
 
                     new_output_logs += (
                         f'Edited vector "{vector_name}" was unable to be '
@@ -174,7 +182,7 @@ class MatrixTransformationsApp:
         ) -> tuple:
             x, y = _vector_getter(x_val, y_val)
             vector_name = name if name else (LOWER_LETTERS[n_clicks % 26 - 1])
-            stored_vectors[vector_name] = [(x, y), color]  # type: ignore
+            stored_vectors[vector_name] = Vector((x, y), color)
             if not previous_vectors:
                 return (create_figure(stored_vectors), stored_vectors, [], output_logs)
 
@@ -802,7 +810,7 @@ class MatrixTransformationsApp:
                             [
                                 html.H2("Vectors"),
                                 dcc.Store(
-                                    id="vector-store", data={**self.BASIS_VECTORS}
+                                    id="vector-store", data=self.BASIS_VECTORS.to_dict(),
                                 ),
                                 html.Div(
                                     [
@@ -1225,21 +1233,24 @@ class MatrixTransformationsApp:
     @staticmethod
     def apply_matrix_to_vectors(matrix: Matrix, vectors: Vectors) -> Vectors:
         new_vectors = vectors.copy()
-        vector_list = [np.array([x, y]) for _, ((x, y), _) in new_vectors.items()]
-        transformed_vectors = [(matrix @ vector).tolist() for vector in vector_list]
+        vector_coords_list = [
+            np.array(vector.coords) for vector in new_vectors.values()
+        ]
+        transformed_vectors_coords = [
+            (matrix @ vector).tolist() for vector in vector_coords_list
+        ]
 
-        for (name, (_, color)), t_vector in zip(
-            new_vectors.items(), transformed_vectors
+        for (name, vector), t_vector_coords in zip(
+            new_vectors.items(), transformed_vectors_coords
         ):
-            new_vectors[name] = [t_vector, color]
+            new_vectors[name] = Vector(t_vector_coords, vector.color)
 
         return new_vectors
 
 
 def main() -> None:
-    app = MatrixTransformationsApp(
-        {"i-hat": [(1, 0), "green"], "j-hat": [(0, 1), "red"]}
-    )
+    BASIS_VECTORS = {"i-hat": Vector((1, 0), "green"), "j-hat": Vector((0, 1), "red")}
+    app = MatrixTransformationsApp(BASIS_VECTORS)
     app.app.run_server(debug=True)
 
 
