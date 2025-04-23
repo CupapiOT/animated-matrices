@@ -174,7 +174,7 @@ class MatrixTransformationsApp:
         ) -> tuple:
             x, y = _vector_getter(x_val, y_val)
             vector_name = name if name else (LOWER_LETTERS[n_clicks % 26 - 1])
-            stored_vectors[vector_name] = [(x, y), color]  # type: ignore
+            stored_vectors[vector_name] = [(x, y), color]
             if not previous_vectors:
                 return (create_figure(stored_vectors), stored_vectors, [], output_logs)
 
@@ -1225,7 +1225,7 @@ class MatrixTransformationsApp:
     @staticmethod
     def apply_matrix_to_vectors(matrix: Matrix, vectors: Vectors) -> Vectors:
         new_vectors = vectors.copy()
-        vector_list = [np.array([x, y]) for _, ((x, y), _) in new_vectors.items()]
+        vector_list = [np.array([x, y]) for ((x, y), _) in new_vectors.values()]
         transformed_vectors = [(matrix @ vector).tolist() for vector in vector_list]
 
         for (name, (_, color)), t_vector in zip(
