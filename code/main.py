@@ -795,7 +795,7 @@ def main() -> None:
     app = MatrixTransformationsApp(
         {"i-hat": [(1, 0), "green"], "j-hat": [(0, 1), "red"]}
     )
-    app.app.run_server(debug=True)
+    app.app.run(debug=True)
 
 
 if __name__ == "__main__":
