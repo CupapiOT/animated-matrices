@@ -1,9 +1,10 @@
 import numpy as np
-from dash import Dash, callback_context, dcc, html, no_update, ALL
+from dash import Dash, callback_context, no_update, ALL
+import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import re
 from constants import *
-from create_figures import create_2d_basis_vectors, create_figure
+from create_figures import create_figure
 from project_types import *
 from matrix_utils import safe_inverse
 from general_utils import set_nonetype_to_zero
@@ -12,7 +13,7 @@ from layout import create_layout
 
 class MatrixTransformationsApp:
     def __init__(self, basis_vectors):
-        self.app = Dash("Matrix Transformations")
+        self.app = Dash("Matrix Transformations", external_stylesheets=[dbc.themes.BOOTSTRAP])
 
         self.BASIS_VECTORS = basis_vectors
 

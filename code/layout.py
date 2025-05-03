@@ -20,11 +20,6 @@ def create_vector_section(app) -> html.Section:
                                 },
                                 className="interactable",
                                 type="number",
-                                style={
-                                    "marginBottom": "10px",
-                                    "width": "45%",
-                                    "marginRight": "5%",
-                                },
                                 placeholder="x",
                             ),
                             dcc.Input(
@@ -34,21 +29,9 @@ def create_vector_section(app) -> html.Section:
                                 },
                                 className="interactable",
                                 type="number",
-                                style={
-                                    "marginBottom": "10px",
-                                    "width": "45%",
-                                },
-                                size="2",
                                 placeholder="y",
                             ),
                         ],
-                        style={
-                            "width": "100%",
-                            "display": "flex",
-                            "flexDirection": "row",
-                            "alignItems": "center",
-                            "justifyContent": "center",
-                        },
                     ),
                     html.Div(
                         [
@@ -59,12 +42,6 @@ def create_vector_section(app) -> html.Section:
                                 },
                                 className="interactable",
                                 type="text",
-                                style={
-                                    "marginRight": "5%",
-                                    "marginBottom": "5%",
-                                    "width": "20%",
-                                },
-                                size="2",
                                 placeholder="Name",
                             ),
                             html.Button(
@@ -74,20 +51,9 @@ def create_vector_section(app) -> html.Section:
                                     "name": "add-vector-button",
                                 },
                                 className="interactable",
-                                style={
-                                    "marginBottom": "5%",
-                                    "width": "70%",
-                                },
                                 n_clicks=0,
                             ),
                         ],
-                        style={
-                            "width": "100%",
-                            "display": "flex",
-                            "flexDirection": "row",
-                            "alignItems": "center",
-                            "justifyContent": "center",
-                        },
                     ),
                     html.Div(
                         [
@@ -107,11 +73,6 @@ def create_vector_section(app) -> html.Section:
                                 value="black",
                             ),
                             html.Hr(
-                                style={
-                                    "width": "100%",
-                                    "marginBottom": "15px",
-                                    "marginTop": "15px",
-                                }
                             ),
                         ]
                     ),
@@ -124,12 +85,6 @@ def create_vector_section(app) -> html.Section:
                                 },
                                 className="interactable",
                                 type="text",
-                                style={
-                                    "marginRight": "5%",
-                                    "marginBottom": "5%",
-                                    "width": "20%",
-                                },
-                                size="2",
                                 placeholder="Name",
                             ),
                             html.Button(
@@ -139,20 +94,10 @@ def create_vector_section(app) -> html.Section:
                                     "name": "delete-vector-button",
                                 },
                                 className="interactable",
-                                style={
-                                    "marginBottom": "5%",
-                                    "width": "70%",
-                                },
                             ),
                         ]
                     ),
                 ],
-                style={
-                    "display": "flex",
-                    "flexDirection": "column",
-                    "marginLeft": "20px",
-                    "width": "200px",
-                },
             ),
         ]
     )
@@ -174,12 +119,6 @@ def create_matrix_section() -> html.Section:
                                 },
                                 className="interactable",
                                 type="number",
-                                style={
-                                    "marginBottom": "10px",
-                                    "marginRight": "10px",
-                                    "width": "80px",
-                                },
-                                size="2",
                                 placeholder="a",
                             ),
                             dcc.Input(
@@ -189,11 +128,6 @@ def create_matrix_section() -> html.Section:
                                 },
                                 className="interactable",
                                 type="number",
-                                style={
-                                    "marginBottom": "10px",
-                                    "width": "80px",
-                                },
-                                size="2",
                                 placeholder="b",
                             ),
                         ]
@@ -207,12 +141,6 @@ def create_matrix_section() -> html.Section:
                                 },
                                 className="interactable",
                                 type="number",
-                                style={
-                                    "marginBottom": "10px",
-                                    "marginRight": "10px",
-                                    "width": "80px",
-                                },
-                                size="2",
                                 placeholder="c",
                             ),
                             dcc.Input(
@@ -222,11 +150,6 @@ def create_matrix_section() -> html.Section:
                                 },
                                 className="interactable",
                                 type="number",
-                                style={
-                                    "marginBottom": "10px",
-                                    "width": "80px",
-                                },
-                                size="2",
                                 placeholder="d",
                             ),
                         ]
@@ -240,11 +163,6 @@ def create_matrix_section() -> html.Section:
                                 },
                                 className="interactable",
                                 type="text",
-                                style={
-                                    "width": "20%",
-                                    "marginRight": "5%",
-                                },
-                                size="2",
                                 placeholder="Name",
                             ),
                             html.Button(
@@ -255,23 +173,10 @@ def create_matrix_section() -> html.Section:
                                 },
                                 className="interactable",
                                 n_clicks=0,
-                                style={"width": "70%"},
                             ),
                         ],
-                        style={
-                            "width": "100%",
-                            "display": "flex",
-                            "flexDirection": "row",
-                            "alignItems": "center",
-                            "justifyContent": "center",
-                        },
                     ),
                     html.Hr(
-                        style={
-                            "marginBottom": "15px",
-                            "marginTop": "15px",
-                            "width": "100%",
-                        }
                     ),
                     html.Div(
                         [
@@ -282,11 +187,6 @@ def create_matrix_section() -> html.Section:
                                 },
                                 className="interactable",
                                 type="text",
-                                style={
-                                    "width": "20%",
-                                    "marginRight": "5%",
-                                },
-                                size="2",
                                 placeholder="Name",
                             ),
                             html.Button(
@@ -297,23 +197,10 @@ def create_matrix_section() -> html.Section:
                                 },
                                 className="interactable",
                                 n_clicks=0,
-                                style={"width": "70%"},
                             ),
                         ],
-                        style={
-                            "width": "100%",
-                            "display": "flex",
-                            "flexDirection": "row",
-                            "alignItems": "center",
-                            "justifyContent": "center",
-                        },
                     ),
                     html.Hr(
-                        style={
-                            "marginBottom": "15px",
-                            "marginTop": "15px",
-                            "width": "100%",
-                        }
                     ),
                     html.Div(
                         [
@@ -326,10 +213,6 @@ def create_matrix_section() -> html.Section:
                                 },
                                 className="interactable",
                                 n_clicks=0,
-                                style={
-                                    "width": "100%",
-                                    "marginBottom": "5%",
-                                },
                             ),
                             dcc.Store(id="undone-matrices-store", data={}),
                             html.Button(
@@ -340,14 +223,8 @@ def create_matrix_section() -> html.Section:
                                 },
                                 className="interactable",
                                 n_clicks=0,
-                                style={"width": "100%"},
                             ),
                             html.Hr(
-                                style={
-                                    "marginBottom": "15px",
-                                    "marginTop": "15px",
-                                    "width": "100%",
-                                }
                             ),
                             html.Div(
                                 [
@@ -358,11 +235,6 @@ def create_matrix_section() -> html.Section:
                                         },
                                         className="interactable",
                                         type="text",
-                                        style={
-                                            "width": "20%",
-                                            "marginRight": "5%",
-                                        },
-                                        size="2",
                                         placeholder="Name",
                                     ),
                                     html.Button(
@@ -373,42 +245,14 @@ def create_matrix_section() -> html.Section:
                                         },
                                         className="interactable",
                                         n_clicks=0,
-                                        style={"width": "70%"},
                                     ),
                                 ],
-                                style={
-                                    "width": "100%",
-                                    "display": "flex",
-                                    "flexDirection": "row",
-                                    "alignItems": "center",
-                                    "justifyContent": "center",
-                                },
                             ),
                         ],
-                        style={
-                            "width": "100%",
-                            "display": "flex",
-                            "flexDirection": "column",
-                            "alignItems": "center",
-                            "justifyContent": "center",
-                        },
                     ),
                 ],
-                style={
-                    "display": "flex",
-                    "flexDirection": "column",
-                    "alignItems": "center",
-                    "justifyContent": "center",
-                },
             ),
         ],
-        style={
-            "display": "flex",
-            "flexDirection": "column",
-            "alignItems": "center",
-            "marginLeft": "20px",
-            "width": "200px",
-        },
     )
 
 
@@ -417,17 +261,10 @@ def create_logs_section() -> html.Section:
         [
             html.Div(
                 [
-                    html.Label("List of Matrices", style={"marginBottom": "10px"}),
                     html.Label("", id="matrix-list"),
                     *([html.Br()] * 4),
-                    html.Label("Recent Logs:", style={"marginBottom": "10px"}),
                     html.Label("", id="output-logs"),
                 ],
-                style={
-                    "display": "flex",
-                    "flexDirection": "column",
-                    "height": "500px",
-                },
             )
         ]
     )
@@ -449,17 +286,11 @@ def create_layout(app) -> html.Div:
                     dcc.Graph(
                         id="graph",
                         figure=create_2d_basis_vectors(app.BASIS_VECTORS),
-                        style={
-                            "height": "1000%",
-                            "width": "70%",
-                            "display": "inline-block",
-                        },
                     ),
                     create_vector_section(app),
                     create_matrix_section(),
                 ],
-                style={"display": "flex", "flexDirection": "row"},
             ),
-            create_logs_section()
+            create_logs_section(),
         ]
     )
