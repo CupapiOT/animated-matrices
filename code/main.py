@@ -13,7 +13,11 @@ from layout import create_layout
 
 class MatrixTransformationsApp:
     def __init__(self, basis_vectors):
-        self.app = Dash("Matrix Transformations", external_stylesheets=[dbc.themes.BOOTSTRAP])
+        self.app = Dash(
+            title="Matrix Transformations",
+            external_stylesheets=[dbc.themes.BOOTSTRAP],
+            meta_tags=META_TAGS,
+        )
 
         self.BASIS_VECTORS = basis_vectors
 
