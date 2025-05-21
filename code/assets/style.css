@@ -1,0 +1,51 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+section {
+  width: min-content;
+  height: min-content;
+}
+
+.card-body div {
+  display: flex;
+  height: 100%;
+}
+
+/* ============================================
+ * Graph Section
+ * ============================================
+ */
+
+section:has(#graph) {
+  float: right;
+}
+
+#graph {
+  display: flex;
+  aspect-ratio: calc(0.6 * (16 / 9));
+  height: 100vmin;
+  float: right;
+}
+
+/* ============================================
+ * Vector Section
+ * ============================================
+ */
+
+.drop-down {
+  width: 100%;
+}
