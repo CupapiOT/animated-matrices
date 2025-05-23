@@ -221,6 +221,7 @@ class MatrixTransformationsApp:
             stored_vectors: Vectors,
             previous_vectors: list[Vectors],
         ) -> tuple:
+            print(stored_vectors)
             if not name:
                 name = list(stored_vectors.keys())[-1]
             if name not in stored_vectors:
@@ -284,7 +285,6 @@ class MatrixTransformationsApp:
 
         @self.app.callback(
             Output("matrix-store", "data", allow_duplicate=True),
-            Output("matrix-list", "children", allow_duplicate=True),
             # Output('graph', 'figure', allow_duplicate=True),
             Output("vector-store", "data", allow_duplicate=True),
             Output("previous-vector-store", "data", allow_duplicate=True),
@@ -343,7 +343,6 @@ class MatrixTransformationsApp:
 
             return (
                 stored_matrices,
-                str(stored_matrices),
                 # create_figure(restored_vectors),
                 new_vectors,
                 previous_vectors,
@@ -436,7 +435,6 @@ class MatrixTransformationsApp:
 
         @self.app.callback(
             Output("matrix-store", "data", allow_duplicate=True),
-            Output("matrix-list", "children", allow_duplicate=True),
             # Output('graph', 'figure', allow_duplicate=True),
             Output("vector-store", "data", allow_duplicate=True),
             Output("previous-vector-store", "data", allow_duplicate=True),
@@ -502,7 +500,7 @@ class MatrixTransformationsApp:
                 output_logs_=output_logs,
             )
             if not valid:
-                return (no_update,) * 5 + (new_output_logs,) + (no_update,) * 2
+                return (no_update,) * 4 + (new_output_logs,) + (no_update,) * 2
 
             name = (
                 matrix_to_invert
@@ -515,7 +513,7 @@ class MatrixTransformationsApp:
             if inverted_matrix is None:
                 log = f'Matrix "{name}" does not have an inverse. '
                 new_output_logs += log
-                return (no_update,) * 5 + (new_output_logs,) + (no_update,) * 2
+                return (no_update,) * 4 + (new_output_logs,) + (no_update,) * 2
 
             inverse_name = "I_" + name
             new_name = generate_unique_matrix_name(
@@ -533,7 +531,6 @@ class MatrixTransformationsApp:
 
             return (
                 stored_matrices,
-                str(stored_matrices),
                 # create_figure(new_vectors),
                 new_vectors,
                 previous_vectors,
@@ -545,7 +542,6 @@ class MatrixTransformationsApp:
 
         @self.app.callback(
             Output("matrix-store", "data", allow_duplicate=True),
-            Output("matrix-list", "children", allow_duplicate=True),
             Output("graph", "figure", allow_duplicate=True),
             Output("vector-store", "data", allow_duplicate=True),
             Output("previous-vector-store", "data", allow_duplicate=True),
@@ -574,7 +570,7 @@ class MatrixTransformationsApp:
             output_logs: str,
         ) -> tuple:
             if not stored_matrices:
-                return (no_update,) * 7
+                return (no_update,) * 6
 
             new_stored_matrices = stored_matrices.copy()
             new_stored_vectors = stored_vectors.copy()
@@ -601,7 +597,6 @@ class MatrixTransformationsApp:
 
             return (
                 new_stored_matrices,
-                str(new_stored_matrices),
                 create_figure(restored_vectors),
                 restored_vectors,
                 new_previous_vectors,
@@ -611,7 +606,6 @@ class MatrixTransformationsApp:
 
         @self.app.callback(
             Output("matrix-store", "data", allow_duplicate=True),
-            Output("matrix-list", "children", allow_duplicate=True),
             # Output('graph', 'figure', allow_duplicate=True),
             Output("vector-store", "data", allow_duplicate=True),
             Output("previous-vector-store", "data", allow_duplicate=True),
@@ -645,7 +639,7 @@ class MatrixTransformationsApp:
             # while `stored_matrices` is empty, but if `undone_matrices`
             # is empty, then `stored_matrices` is for sure empty too.
             if not undone_matrices:
-                return (no_update,) * 7
+                return (no_update,) * 6
 
             last_undone_matrix_name = list(undone_matrices.keys())[-1]
             stored_matrices[last_undone_matrix_name] = undone_matrices.pop(
@@ -665,7 +659,6 @@ class MatrixTransformationsApp:
 
             return (
                 stored_matrices,
-                str(stored_matrices),
                 # create_figure(restored_vectors),
                 restored_vectors,
                 previous_vectors,
@@ -676,7 +669,6 @@ class MatrixTransformationsApp:
 
         @self.app.callback(
             Output("matrix-store", "data"),
-            Output("matrix-list", "children"),
             # Output('graph', 'figure'),
             Output("vector-store", "data"),
             Output("previous-vector-store", "data"),
@@ -730,7 +722,7 @@ class MatrixTransformationsApp:
                 output_logs_=output_logs,
             )
             if not valid:
-                return (no_update,) * 5 + (new_output_logs,) + (no_update,) * 2
+                return (no_update,) * 4 + (new_output_logs,) + (no_update,) * 2
 
             if not selected_matrix:
                 selected_matrix = list(stored_matrices.keys())[-1]
@@ -750,7 +742,6 @@ class MatrixTransformationsApp:
 
             return (
                 stored_matrices,
-                str(stored_matrices),
                 # create_figure(new_vectors),
                 new_vectors,
                 previous_vectors,
@@ -781,6 +772,14 @@ class MatrixTransformationsApp:
                 return "Edit Vector"
             else:
                 return "Add Vector"
+
+        @self.app.callback(
+            Output("matrix-list", "children", allow_duplicate=True),
+            [Input("matrix-store", "data")],
+            prevent_initial_call=True,
+        )
+        def update_matrix_list(stored_matrices: MatrixDict) -> str:
+            return str(stored_matrices)
 
     @staticmethod
     def apply_matrix_to_vectors(matrix: Matrix, vectors: Vectors) -> Vectors:

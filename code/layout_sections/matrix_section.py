@@ -121,29 +121,30 @@ def create_matrix_section() -> html.Section:
                         n_clicks=0,
                     ),
                     html.Hr(),
-                    html.Div(
-                        [
-                            dcc.Input(
-                                id={
-                                    "type": "interactable",
-                                    "name": "repeat-matrix-entry-name",
-                                },
-                                className="interactable",
-                                type="text",
-                                placeholder="Name",
-                            ),
-                            html.Button(
-                                "Repeat Matrix",
-                                id={
-                                    "type": "interactable",
-                                    "name": "repeat-matrix-button",
-                                },
-                                className="interactable",
-                                n_clicks=0,
-                            ),
-                        ],
+                ],
+            ),
+            html.Div(
+                [
+                    dcc.Input(
+                        id={
+                            "type": "interactable",
+                            "name": "repeat-matrix-entry-name",
+                        },
+                        className="interactable",
+                        type="text",
+                        placeholder="Name",
+                    ),
+                    html.Button(
+                        "Repeat Matrix",
+                        id={
+                            "type": "interactable",
+                            "name": "repeat-matrix-button",
+                        },
+                        className="interactable",
+                        n_clicks=0,
                     ),
                 ],
             ),
+            html.Label("", id="matrix-list"),
         ],
     )
