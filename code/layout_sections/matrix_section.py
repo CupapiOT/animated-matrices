@@ -145,6 +145,6 @@ def create_matrix_section() -> html.Section:
                     ),
                 ],
             ),
-            html.Label("", id="matrix-list"),
+            html.Div("", id="matrix-list"),
         ],
     )

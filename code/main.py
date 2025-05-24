@@ -1,6 +1,8 @@
+from dash_latex.DashLatex import DashLatex
 import numpy as np
 from dash import Dash, callback_context, no_update, ALL
 import dash_bootstrap_components as dbc
+import dash_latex as dl
 from dash.dependencies import Input, Output, State
 import re
 from constants import *
@@ -515,7 +517,12 @@ class MatrixTransformationsApp:
                 new_output_logs += log
                 return (no_update,) * 4 + (new_output_logs,) + (no_update,) * 2
 
-            inverse_name = "I_" + name
+            inverse_name = "I_{" + name + "}"
+            # TODO: Create better name handling appropriate for math expressions.
+            # if "^{-1}" in name:
+            #     inverse_name = "(" + name + ")^{-1}"
+            # else:
+            #     inverse_name = name + r"^{-1}"
             new_name = generate_unique_matrix_name(
                 name=inverse_name, existing_names=stored_matrices
             )
@@ -778,8 +785,25 @@ class MatrixTransformationsApp:
             [Input("matrix-store", "data")],
             prevent_initial_call=True,
         )
-        def update_matrix_list(stored_matrices: MatrixDict) -> str:
-            return str(stored_matrices)
+        def update_matrix_list(stored_matrices: MatrixDict) -> list[dl.DashLatex]:
+            def smart_format(value):
+                return ("%.5f" % value).rstrip("0").rstrip(".")
+
+            new_list: list[str] = []
+            for mat_name, ((x1, y1), (x2, y2)) in stored_matrices.items():
+                current_matrix = (
+                    r"""\( %s = \begin{bmatrix} %s & %s \\ %s & %s \end{bmatrix} \)"""
+                    % (
+                        mat_name,
+                        smart_format(x1),
+                        smart_format(y1),
+                        smart_format(x2),
+                        smart_format(y2),
+                    )
+                )
+                current_matrix = current_matrix.strip()
+                new_list.append(current_matrix)
+            return [dl.DashLatex(mat_latex) for mat_latex in new_list]
 
     @staticmethod
     def apply_matrix_to_vectors(matrix: Matrix, vectors: Vectors) -> Vectors:
