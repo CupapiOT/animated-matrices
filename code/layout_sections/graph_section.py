@@ -4,7 +4,8 @@ from create_figures import create_2d_basis_vectors
 
 def create_graph_section(app) -> html.Section:
     return html.Section(
-        [
+        id="graph-sect",
+        children=[
             dcc.Interval(
                 id="animation-interval",
                 disabled=True,

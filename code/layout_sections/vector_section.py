@@ -6,7 +6,8 @@ from project_types import *
 
 def create_vector_section(app) -> html.Section:
     return html.Section(
-        [
+        id="vector-sect",
+        children=[
             dcc.Store(id="vector-store", data={**app.BASIS_VECTORS}),
             html.Div(
                 [
