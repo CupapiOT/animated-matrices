@@ -34,7 +34,7 @@ def create_2d_basis_vectors(
     return fig
 
 
-def create_figure(vectors: Vectors) -> Figure:
+def create_figure(vectors: Vectors, scale: int = 10) -> Figure:
     fig = Figure()
 
     for name, ((x, y), color) in vectors.items():
@@ -48,17 +48,17 @@ def create_figure(vectors: Vectors) -> Figure:
             name=name
         ))
 
-    _update_fig_layout(fig)
+    _update_fig_layout(fig, scale)
 
     return fig
 
 
-def _update_fig_layout(fig) -> None:
+def _update_fig_layout(fig, scale = 10) -> None:
     fig.update_layout(
         title='Graph',
         xaxis_title='',
         yaxis_title='',
-        xaxis=dict(range=[-10, 10]),
-        yaxis=dict(range=[-10, 10], scaleanchor='x'),
+        xaxis=dict(range=[-scale, scale]),
+        yaxis=dict(range=[-scale, scale], scaleanchor='x'),
         showlegend=True
     )
