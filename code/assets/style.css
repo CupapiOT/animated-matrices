@@ -36,7 +36,7 @@ section:has(#graph) {
 
 #graph {
   display: flex;
-  aspect-ratio: calc(0.6 * (16 / 9));
+  aspect-ratio: calc(0.565 * (16 / 9));
   height: 100vmin;
   float: right;
 }
@@ -48,4 +48,20 @@ section:has(#graph) {
 
 .drop-down {
   width: 100%;
+}
+
+/* ============================================
+ * Matrix Section
+ * ============================================
+ */
+
+.matrix-section__logs {
+  padding-top: 1em;
+  border-top: 1em;
+}
+
+#matrix-section__matrix-list {
+  row-gap: 1em;
+  column-gap: 1em;
+  flex-wrap: wrap;
 }
