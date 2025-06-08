@@ -1,5 +1,5 @@
 from plotly.graph_objects import Figure, Scatter
-from project_types import Vectors
+from project_types import Vectors, Number
 
 __all__ = ['create_2d_basis_vectors', 'create_figure']
 
@@ -34,7 +34,7 @@ def create_2d_basis_vectors(
     return fig
 
 
-def create_figure(vectors: Vectors, scale: int = 10) -> Figure:
+def create_figure(vectors: Vectors, scale: Number = 10) -> Figure:
     fig = Figure()
 
     for name, ((x, y), color) in vectors.items():
@@ -53,7 +53,7 @@ def create_figure(vectors: Vectors, scale: int = 10) -> Figure:
     return fig
 
 
-def _update_fig_layout(fig, scale = 10) -> None:
+def _update_fig_layout(fig, scale: Number = 10) -> None:
     fig.update_layout(
         title='Graph',
         xaxis_title='',

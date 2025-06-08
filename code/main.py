@@ -1,4 +1,3 @@
-from dash_latex.DashLatex import DashLatex
 import numpy as np
 from dash import Dash, callback_context, no_update, ALL
 import dash_bootstrap_components as dbc
@@ -361,12 +360,24 @@ class MatrixTransformationsApp:
                 Input("animation-interval", "n_intervals"),
                 State("animation-steps", "data"),
             ],
-            [State("previous-vector-store", "data")],
+            [State("previous-vector-store", "data"), State("vector-store", "data")],
             prevent_initial_call=True,
         )
         def animate_graph(
-            _, animation_steps: list[Matrix], previous_vectors: list[Vectors]
+            _,
+            animation_steps: list[Matrix],
+            previous_vectors: list[Vectors],
+            stored_vectors: Vectors,
         ) -> tuple:
+            def calculate_longest_vector_mag(vectors: Vectors) -> Number:
+                magnitude_of_longest_vector: Number = -float("inf")
+                for (vector_coords), _ in vectors.values():
+                    vector_mag = np.linalg.norm(np.array(vector_coords))
+                    magnitude_of_longest_vector = max(
+                        magnitude_of_longest_vector, float(vector_mag)
+                    )
+                return magnitude_of_longest_vector
+
             if not animation_steps:
                 return no_update, True, no_update
 
@@ -375,8 +386,17 @@ class MatrixTransformationsApp:
             interpolated_vectors = self.apply_matrix_to_vectors(
                 current_frame, vectors_to_animate
             )
+
+            # Get the appropriate scale of the graph.
+            # TODO: Finish this based on the final scale of every vector.
+            first_frame_vectors = vectors_to_animate
+            first_frame_mag = calculate_longest_vector_mag(first_frame_vectors)
+            last_frame_vectors = stored_vectors.copy()
+            last_frame_mag = calculate_longest_vector_mag(last_frame_vectors)
+            scale = max(first_frame_mag, last_frame_mag) * 1.1
+
             return (
-                create_figure(interpolated_vectors),
+                create_figure(interpolated_vectors, scale),
                 no_update,
                 animation_steps[1:] if animation_steps else [],
             )
