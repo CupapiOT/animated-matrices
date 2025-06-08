@@ -801,8 +801,8 @@ class MatrixTransformationsApp:
                 return "Add Vector"
 
         @self.app.callback(
-            Output("matrix-section__matrix-list", "children", allow_duplicate=True),
-            Output("matrix-section__latest-matrix", "children", allow_duplicate=True),
+            Output("matrix-sect__matrix-list", "children", allow_duplicate=True),
+            Output("matrix-sect__latest-matrix", "children", allow_duplicate=True),
             [Input("matrix-store", "data")],
             prevent_initial_call=True,
         )

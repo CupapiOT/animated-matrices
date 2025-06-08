@@ -32,7 +32,8 @@ def create_matrix_section() -> html.Section:
                                 type="number",
                                 placeholder="b",
                             ),
-                        ]
+                        ],
+                        id="matrix-sect__a-b",
                     ),
                     html.Div(
                         [
@@ -54,7 +55,8 @@ def create_matrix_section() -> html.Section:
                                 type="number",
                                 placeholder="d",
                             ),
-                        ]
+                        ],
+                        id="matrix-sect__c-d",
                     ),
                 ],
             ),
@@ -159,14 +161,14 @@ def create_matrix_section() -> html.Section:
             dbc.Tabs(
                 [
                     dbc.Tab(
-                        html.Div("No matrices right now.", id="matrix-section__matrix-list", className="matrix-section__logs"),
+                        html.Div("No matrices right now.", id="matrix-sect__matrix-list", className="matrix-section__logs"),
                         label="All Matrices",
-                        tab_id="matrix-section-tab__all-matrices",
+                        tab_id="matrix-sect__all-matrices",
                     ),
                     dbc.Tab(
-                        html.Div("No matrices right now.", id="matrix-section__latest-matrix", className="matrix-section__logs"),
+                        html.Div("No matrices right now.", id="matrix-sect__latest-matrix", className="matrix-section__logs"),
                         label="Latest Matrix",
-                        tab_id="matrix-section-tab__latest-matrix",
+                        tab_id="matrix-sect__latest-matrix",
                     ),
                 ]
             ),

@@ -60,7 +60,7 @@ section:has(#graph) {
   border-top: 1em;
 }
 
-#matrix-section__matrix-list {
+#matrix-sect__matrix-list {
   row-gap: 1em;
   column-gap: 1em;
   flex-wrap: wrap;
