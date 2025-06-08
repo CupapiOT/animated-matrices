@@ -17,11 +17,12 @@ def create_layout(app) -> html.Main:
             create_graph_section(app),
             dbc.Tabs(
                 [
-                    dbc.Tab(vector_tab, label="Vectors"),
-                    dbc.Tab(matrix_tab, label="Matrices"),
-                    dbc.Tab(logs_tab, label="Logs"),
+                    dbc.Tab(matrix_tab, label="Matrices", tab_id="matrix-section-tab"),
+                    dbc.Tab(vector_tab, label="Vectors", tab_id="vector-section-tab"),
+                    dbc.Tab(logs_tab, label="Logs", tab_id="log-section-tab"),
                 ],
-                id="section-tabs"
+                id="section-tabs",
+                active_tab="matrix-section-tab"
             ),
         ]
     )

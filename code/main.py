@@ -801,11 +801,14 @@ class MatrixTransformationsApp:
                 return "Add Vector"
 
         @self.app.callback(
-            Output("matrix-list", "children", allow_duplicate=True),
+            Output("matrix-section__matrix-list", "children", allow_duplicate=True),
+            Output("matrix-section__latest-matrix", "children", allow_duplicate=True),
             [Input("matrix-store", "data")],
             prevent_initial_call=True,
         )
-        def update_matrix_list(stored_matrices: MatrixDict) -> list[dl.DashLatex]:
+        def update_matrix_list(
+            stored_matrices: MatrixDict,
+        ) -> tuple[list[dl.DashLatex], dl.DashLatex]:
             def smart_format(value):
                 return ("%.5f" % value).rstrip("0").rstrip(".")
 
@@ -823,7 +826,11 @@ class MatrixTransformationsApp:
                 )
                 current_matrix = current_matrix.strip()
                 new_list.append(current_matrix)
-            return [dl.DashLatex(mat_latex) for mat_latex in new_list]
+            matrix_list: list[dl.DashLatex] = [
+                dl.DashLatex(mat_latex) for mat_latex in new_list
+            ]
+            latest_matrix = dl.DashLatex(new_list[-1])
+            return matrix_list, latest_matrix
 
     @staticmethod
     def apply_matrix_to_vectors(matrix: Matrix, vectors: Vectors) -> Vectors:

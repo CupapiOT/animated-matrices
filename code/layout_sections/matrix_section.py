@@ -155,6 +155,20 @@ def create_matrix_section() -> html.Section:
                     ),
                 ],
             ),
-            html.Div("", id="matrix-list"),
+            html.Hr(),
+            dbc.Tabs(
+                [
+                    dbc.Tab(
+                        html.Div("No matrices right now.", id="matrix-section__matrix-list", className="matrix-section__logs"),
+                        label="All Matrices",
+                        tab_id="matrix-section-tab__all-matrices",
+                    ),
+                    dbc.Tab(
+                        html.Div("No matrices right now.", id="matrix-section__latest-matrix", className="matrix-section__logs"),
+                        label="Latest Matrix",
+                        tab_id="matrix-section-tab__latest-matrix",
+                    ),
+                ]
+            ),
         ],
     )
