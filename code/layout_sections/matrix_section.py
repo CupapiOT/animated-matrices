@@ -2,6 +2,7 @@ from dash import dcc, html
 from constants import *
 import dash_bootstrap_components as dbc
 from project_types import *
+from layout_sections.layout_components import matrix_component
 
 
 def create_matrix_section() -> html.Section:
@@ -9,56 +10,48 @@ def create_matrix_section() -> html.Section:
         id="matrix-sect",
         children=[
             dcc.Store(id="matrix-store", data={}),
-            html.Div(
+            matrix_component.input_matrix(
                 id="matrix-sect__coordinates",
-                children=[
-                    html.Div(
-                        [
-                            dcc.Input(
-                                id={
-                                    "type": "interactable",
-                                    "name": "matrix-entry-1",
-                                },
-                                className="interactable",
-                                type="number",
-                                placeholder="a",
-                            ),
-                            dcc.Input(
-                                id={
-                                    "type": "interactable",
-                                    "name": "matrix-entry-2",
-                                },
-                                className="interactable",
-                                type="number",
-                                placeholder="b",
-                            ),
-                        ],
-                        id="matrix-sect__a-b",
+                inputs=[
+                    dcc.Input(
+                        id={
+                            "type": "interactable",
+                            "name": "matrix-entry-1",
+                        },
+                        className="interactable",
+                        type="number",
+                        placeholder="a",
                     ),
-                    html.Div(
-                        [
-                            dcc.Input(
-                                id={
-                                    "type": "interactable",
-                                    "name": "matrix-entry-3",
-                                },
-                                className="interactable",
-                                type="number",
-                                placeholder="c",
-                            ),
-                            dcc.Input(
-                                id={
-                                    "type": "interactable",
-                                    "name": "matrix-entry-4",
-                                },
-                                className="interactable",
-                                type="number",
-                                placeholder="d",
-                            ),
-                        ],
-                        id="matrix-sect__c-d",
+                    dcc.Input(
+                        id={
+                            "type": "interactable",
+                            "name": "matrix-entry-2",
+                        },
+                        className="interactable",
+                        type="number",
+                        placeholder="b",
+                    ),
+                    dcc.Input(
+                        id={
+                            "type": "interactable",
+                            "name": "matrix-entry-3",
+                        },
+                        className="interactable",
+                        type="number",
+                        placeholder="c",
+                    ),
+                    dcc.Input(
+                        id={
+                            "type": "interactable",
+                            "name": "matrix-entry-4",
+                        },
+                        className="interactable",
+                        type="number",
+                        placeholder="d",
                     ),
                 ],
+                ab_id="matrix-sect__a-b",
+                cd_id="matrix-sect__c-d",
             ),
             html.Div(
                 id="matrix-sect__add-submit",
@@ -161,12 +154,20 @@ def create_matrix_section() -> html.Section:
             dbc.Tabs(
                 [
                     dbc.Tab(
-                        html.Div("No matrices right now.", id="matrix-sect__matrix-list", className="matrix-section__logs"),
+                        html.Div(
+                            "No matrices right now.",
+                            id="matrix-sect__matrix-list",
+                            className="matrix-section__logs",
+                        ),
                         label="All Matrices",
                         tab_id="matrix-sect__all-matrices",
                     ),
                     dbc.Tab(
-                        html.Div("No matrices right now.", id="matrix-sect__latest-matrix", className="matrix-section__logs"),
+                        html.Div(
+                            "No matrices right now.",
+                            id="matrix-sect__latest-matrix",
+                            className="matrix-section__logs",
+                        ),
                         label="Latest Matrix",
                         tab_id="matrix-sect__latest-matrix",
                     ),
