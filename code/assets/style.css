@@ -15,11 +15,6 @@
   border: 0;
 }
 
-section {
-  width: min-content;
-  height: min-content;
-}
-
 .card-body div {
   display: flex;
   height: 100%;
@@ -57,11 +52,92 @@ section:has(#graph) {
 
 .matrix-section__logs {
   padding-top: 1em;
-  border-top: 1em;
 }
+
+#matrix-sect__coordinates {
+  margin-bottom: 2em;
+}
+
 
 #matrix-sect__matrix-list {
   row-gap: 1em;
   column-gap: 1em;
   flex-wrap: wrap;
+}
+
+/* ============================================
+ * Utility Classes
+ * ============================================
+ */
+
+.input-matrix {
+  position: relative;
+  display: flex;
+  width: min-content;
+  padding-inline: 1em;
+  justify-content: space-evenly;
+  
+}
+
+.input-matrix__inputs {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.5em;
+}
+
+.input-matrix__inputs__a-b,
+.input-matrix__inputs__c-d {
+  column-gap: 0.5em;
+}
+
+.input-matrix__inputs input {
+  position: relative;
+  left: 0.6em;
+  border: 0;
+  aspect-ratio: 21 / 9;
+  width: 5em;
+  text-align: center;
+}
+
+.left-bracket,
+.right-bracket {
+  position: absolute;
+  background-color: #323232;
+  bottom: 0;
+  top: 0;
+  width: 2px;
+}
+
+.left-bracket {
+  left: 0;
+}
+
+.right-bracket {
+  right: 0;
+}
+
+.left-bracket::before, .left-bracket::after {
+  content: "";
+  position: absolute;
+  background-color: #323232;
+  height: 2px;
+  left: 0;
+  width: 9px;
+}
+
+.right-bracket::before, .right-bracket::after {
+  content: "";
+  position: absolute;
+  background-color: #323232;
+  height: 2px;
+  right: 0;
+  width: 9px;
+}
+
+.left-bracket::before, .right-bracket::before {
+  top: 0;
+}
+
+.left-bracket::after, .right-bracket::after {
+  bottom: 0;
 }
