@@ -141,3 +141,7 @@ section:has(#graph) {
 .left-bracket::after, .right-bracket::after {
   bottom: 0;
 }
+
+.horizontal-reverse {
+  transform: scaleX(-1);
+}

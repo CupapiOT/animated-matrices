@@ -108,22 +108,32 @@ def create_matrix_section() -> html.Section:
                         dcc.Store(id="previous-vector-store", data=[]),
                         dcc.Store(id="undone-matrices-store", data={}),
                         dbc.Button(
-                            "Undo Last Matrix",
+                            html.Img(
+                                src="assets/img/undo-icon.svg",
+                                alt="Undo Last Matrix Icon",
+                            ),
                             id={
                                 "type": "interactable",
                                 "name": "undo-matrix-button",
                             },
                             className="interactable",
                             n_clicks=0,
+                            title="Undo Last Matrix",
                         ),
                         dbc.Button(
-                            "Redo Last Matrix",
+                            # We use the same SVG file and reverse it using CSS.
+                            html.Img(
+                                src="assets/img/undo-icon.svg",
+                                alt="Redo Last Matrix Icon",
+                                className="horizontal-reverse",
+                            ),
                             id={
                                 "type": "interactable",
                                 "name": "redo-matrix-button",
                             },
                             className="interactable",
                             n_clicks=0,
+                            title="Redo Last Matrix",
                         ),
                     ]
                 ),
