@@ -829,8 +829,8 @@ class MatrixTransformationsApp:
             matrix_list: list[dl.DashLatex] = [
                 dl.DashLatex(mat_latex) for mat_latex in new_list
             ]
-            latest_matrix = dl.DashLatex(new_list[-1])
-            return matrix_list, latest_matrix
+            latest_matrix = new_list[-1] if len(new_list) else ""
+            return matrix_list, dl.DashLatex(latest_matrix)
 
     @staticmethod
     def apply_matrix_to_vectors(matrix: Matrix, vectors: Vectors) -> Vectors:
