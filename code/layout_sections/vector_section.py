@@ -42,7 +42,7 @@ def create_vector_section(app) -> html.Section:
                         type="text",
                         placeholder="Name",
                     ),
-                    html.Button(
+                    dbc.Button(
                         children="Add Vector",
                         id={
                             "type": "interactable",
@@ -84,7 +84,7 @@ def create_vector_section(app) -> html.Section:
                         type="text",
                         placeholder="Name",
                     ),
-                    html.Button(
+                    dbc.Button(
                         "Delete Vector",
                         id={
                             "type": "interactable",

@@ -65,7 +65,7 @@ def create_matrix_section() -> html.Section:
                         type="text",
                         placeholder="Name",
                     ),
-                    html.Button(
+                    dbc.Button(
                         "Add Matrix",
                         id={
                             "type": "interactable",
@@ -89,7 +89,7 @@ def create_matrix_section() -> html.Section:
                         type="text",
                         placeholder="Name",
                     ),
-                    html.Button(
+                    dbc.Button(
                         "Apply Inverse",
                         id={
                             "type": "interactable",
@@ -103,30 +103,32 @@ def create_matrix_section() -> html.Section:
             html.Hr(),
             html.Div(
                 id="matrix-sect__undo-redo",
-                children=[
-                    dcc.Store(id="previous-vector-store", data=[]),
-                    html.Button(
-                        "Undo Last Matrix",
-                        id={
-                            "type": "interactable",
-                            "name": "undo-matrix-button",
-                        },
-                        className="interactable",
-                        n_clicks=0,
-                    ),
-                    dcc.Store(id="undone-matrices-store", data={}),
-                    html.Button(
-                        "Redo Last Matrix",
-                        id={
-                            "type": "interactable",
-                            "name": "redo-matrix-button",
-                        },
-                        className="interactable",
-                        n_clicks=0,
-                    ),
-                    html.Hr(),
-                ],
+                children=dbc.ButtonGroup(
+                    [
+                        dcc.Store(id="previous-vector-store", data=[]),
+                        dcc.Store(id="undone-matrices-store", data={}),
+                        dbc.Button(
+                            "Undo Last Matrix",
+                            id={
+                                "type": "interactable",
+                                "name": "undo-matrix-button",
+                            },
+                            className="interactable",
+                            n_clicks=0,
+                        ),
+                        dbc.Button(
+                            "Redo Last Matrix",
+                            id={
+                                "type": "interactable",
+                                "name": "redo-matrix-button",
+                            },
+                            className="interactable",
+                            n_clicks=0,
+                        ),
+                    ]
+                ),
             ),
+            html.Hr(),
             html.Div(
                 id="matrix-sect__repeat",
                 children=[
@@ -139,7 +141,7 @@ def create_matrix_section() -> html.Section:
                         type="text",
                         placeholder="Name",
                     ),
-                    html.Button(
+                    dbc.Button(
                         "Repeat Matrix",
                         id={
                             "type": "interactable",
