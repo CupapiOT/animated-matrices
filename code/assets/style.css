@@ -65,6 +65,13 @@ section:has(#graph) {
   flex-wrap: wrap;
 }
 
+#matrix-sect__undo-redo {
+  position: absolute;
+  width: min-content;
+  height: min-content;
+  right: 1em;
+}
+
 /* ============================================
  * Utility Classes
  * ============================================

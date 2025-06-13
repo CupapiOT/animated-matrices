@@ -9,6 +9,43 @@ def create_matrix_section() -> html.Section:
     return html.Section(
         id="matrix-sect",
         children=[
+            html.Div(
+                id="matrix-sect__undo-redo",
+                children=dbc.ButtonGroup(
+                    [
+                        dcc.Store(id="previous-vector-store", data=[]),
+                        dcc.Store(id="undone-matrices-store", data={}),
+                        dbc.Button(
+                            html.Img(
+                                src="assets/img/undo-icon.svg",
+                                alt="Undo Last Matrix Icon",
+                            ),
+                            id={
+                                "type": "interactable",
+                                "name": "undo-matrix-button",
+                            },
+                            className="interactable",
+                            n_clicks=0,
+                            title="Undo Last Matrix",
+                        ),
+                        dbc.Button(
+                            # We use the same SVG file and reverse it using CSS.
+                            html.Img(
+                                src="assets/img/undo-icon.svg",
+                                alt="Redo Last Matrix Icon",
+                                className="horizontal-reverse",
+                            ),
+                            id={
+                                "type": "interactable",
+                                "name": "redo-matrix-button",
+                            },
+                            className="interactable",
+                            n_clicks=0,
+                            title="Redo Last Matrix",
+                        ),
+                    ]
+                ),
+            ),
             dcc.Store(id="matrix-store", data={}),
             matrix_component.input_matrix(
                 id="matrix-sect__coordinates",
@@ -99,44 +136,6 @@ def create_matrix_section() -> html.Section:
                         n_clicks=0,
                     ),
                 ],
-            ),
-            html.Hr(),
-            html.Div(
-                id="matrix-sect__undo-redo",
-                children=dbc.ButtonGroup(
-                    [
-                        dcc.Store(id="previous-vector-store", data=[]),
-                        dcc.Store(id="undone-matrices-store", data={}),
-                        dbc.Button(
-                            html.Img(
-                                src="assets/img/undo-icon.svg",
-                                alt="Undo Last Matrix Icon",
-                            ),
-                            id={
-                                "type": "interactable",
-                                "name": "undo-matrix-button",
-                            },
-                            className="interactable",
-                            n_clicks=0,
-                            title="Undo Last Matrix",
-                        ),
-                        dbc.Button(
-                            # We use the same SVG file and reverse it using CSS.
-                            html.Img(
-                                src="assets/img/undo-icon.svg",
-                                alt="Redo Last Matrix Icon",
-                                className="horizontal-reverse",
-                            ),
-                            id={
-                                "type": "interactable",
-                                "name": "redo-matrix-button",
-                            },
-                            className="interactable",
-                            n_clicks=0,
-                            title="Redo Last Matrix",
-                        ),
-                    ]
-                ),
             ),
             html.Hr(),
             html.Div(
