@@ -10,7 +10,7 @@ def create_vector_section(app) -> html.Section:
         children=[
             dcc.Store(id="vector-store", data={**app.BASIS_VECTORS}),
             html.Div(
-                [
+                children=[
                     dcc.Input(
                         id={
                             "type": "interactable",
@@ -32,7 +32,8 @@ def create_vector_section(app) -> html.Section:
                 ],
             ),
             html.Div(
-                [
+                className="entry-input-pair",
+                children=[
                     dcc.Input(
                         id={
                             "type": "interactable",
@@ -74,7 +75,8 @@ def create_vector_section(app) -> html.Section:
                 ]
             ),
             html.Div(
-                [
+                className="entry-input-pair",
+                children=[
                     dcc.Input(
                         id={
                             "type": "interactable",

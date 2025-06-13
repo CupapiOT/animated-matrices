@@ -92,6 +92,7 @@ def create_matrix_section() -> html.Section:
             ),
             html.Div(
                 id="matrix-sect__add-submit",
+                className="entry-input-pair",
                 children=[
                     dcc.Input(
                         id={
@@ -116,6 +117,7 @@ def create_matrix_section() -> html.Section:
             html.Hr(),
             html.Div(
                 id="matrix-sect__inverse",
+                className="entry-input-pair",
                 children=[
                     dcc.Input(
                         id={
@@ -140,6 +142,7 @@ def create_matrix_section() -> html.Section:
             html.Hr(),
             html.Div(
                 id="matrix-sect__repeat",
+                className="entry-input-pair",
                 children=[
                     dcc.Input(
                         id={
