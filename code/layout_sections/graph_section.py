@@ -17,5 +17,5 @@ def create_graph_section(app) -> html.Section:
                 id="graph",
                 figure=create_2d_basis_vectors(app.BASIS_VECTORS),
             ),
-        ]
+        ],
     )

@@ -94,7 +94,7 @@ def create_vector_section(app) -> html.Section:
                         },
                         className="interactable",
                     ),
-                ]
+                ],
             ),
-        ]
+        ],
     )

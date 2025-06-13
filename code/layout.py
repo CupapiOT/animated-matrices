@@ -7,6 +7,7 @@ from layout_sections.matrix_section import create_matrix_section
 from layout_sections.logs_section import create_logs_section
 from layout_sections.graph_section import create_graph_section
 
+
 def create_layout(app) -> html.Main:
     vector_tab = dbc.Card(dbc.CardBody(create_vector_section(app)))
     matrix_tab = dbc.Card(dbc.CardBody(create_matrix_section()))
@@ -22,7 +23,7 @@ def create_layout(app) -> html.Main:
                     dbc.Tab(logs_tab, label="Logs", tab_id="log-section-tab"),
                 ],
                 id="section-tabs",
-                active_tab="matrix-section-tab"
+                active_tab="matrix-section-tab",
             ),
         ]
     )

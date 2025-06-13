@@ -1,5 +1,6 @@
 from dash import html
 
+
 def create_logs_section() -> html.Section:
     return html.Section(
         id="log-sect",
@@ -9,7 +10,5 @@ def create_logs_section() -> html.Section:
                     html.Label("", id="output-logs"),
                 ],
             )
-        ]
+        ],
     )
-
-

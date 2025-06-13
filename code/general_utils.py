@@ -1,5 +1,5 @@
 def set_nonetype_to_zero(
-        *values: int | float | None,
+    *values: int | float | None,
 ) -> tuple | list:
     """
     Takes any number of int-type or float-type values and filters them,

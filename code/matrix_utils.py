@@ -1,7 +1,7 @@
 from numpy import ndarray
 from numpy.linalg import inv, LinAlgError
 
-__all__ = ['safe_inverse']
+__all__ = ["safe_inverse"]
 
 
 def safe_inverse(matrix: ndarray) -> ndarray | None:
@@ -22,9 +22,11 @@ def safe_inverse(matrix: ndarray) -> ndarray | None:
         return None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     def main() -> None:
         from numpy import array
+
         mat = array([[1, 0], [0, 1]])
         inverted_mat = safe_inverse(mat)
         print(inverted_mat is not None)
