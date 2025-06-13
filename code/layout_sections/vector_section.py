@@ -2,6 +2,7 @@ from dash import dcc, html
 from constants import *
 import dash_bootstrap_components as dbc
 from project_types import *
+from layout_sections.layout_components import matrix_component
 
 
 def create_vector_section(app) -> html.Section:
@@ -9,8 +10,9 @@ def create_vector_section(app) -> html.Section:
         id="vector-sect",
         children=[
             dcc.Store(id="vector-store", data={**app.BASIS_VECTORS}),
-            html.Div(
-                children=[
+            matrix_component.input_matrix(
+                id="vector-sect__coordinates",
+                inputs=[
                     dcc.Input(
                         id={
                             "type": "interactable",

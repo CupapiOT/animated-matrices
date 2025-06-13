@@ -33,7 +33,11 @@ def input_matrix(
         )
 
     if inputs_count == 2:
-        inputs_component: tuple = (html.Div(className=ab_id, children=inputs),)
+        inputs_container = html.Div(
+            id=abcd_id,
+            className="input-matrix__inputs" + abcd_className,
+            children=inputs,
+        )
     else:
         inputs_component: tuple = (
             html.Div(
@@ -47,17 +51,18 @@ def input_matrix(
                 children=inputs[2:],
             ),
         )
+        inputs_container = html.Div(
+            id=abcd_id,
+            className="input-matrix__inputs" + abcd_className,
+            children=inputs_component,
+        )
 
     matrix_component = html.Div(
         id=id,
         className="input-matrix " + className,
         children=[
             html.Div(className="left-bracket"),
-            html.Div(
-                id=abcd_id,
-                className="input-matrix__inputs" + abcd_className,
-                children=inputs_component,
-            ),
+            inputs_container,
             html.Div(className="right-bracket"),
         ],
     )

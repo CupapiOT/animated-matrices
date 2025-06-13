@@ -49,6 +49,8 @@ def create_matrix_section() -> html.Section:
             dcc.Store(id="matrix-store", data={}),
             matrix_component.input_matrix(
                 id="matrix-sect__coordinates",
+                ab_id="matrix-sect__a-b",
+                cd_id="matrix-sect__c-d",
                 inputs=[
                     dcc.Input(
                         id={
@@ -87,8 +89,6 @@ def create_matrix_section() -> html.Section:
                         placeholder="d",
                     ),
                 ],
-                ab_id="matrix-sect__a-b",
-                cd_id="matrix-sect__c-d",
             ),
             html.Div(
                 id="matrix-sect__add-submit",
