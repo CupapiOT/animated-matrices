@@ -15,11 +15,6 @@
   border: 0;
 }
 
-.card-body div {
-  display: flex;
-  height: 100%;
-}
-
 /* ============================================
  * Graph Section
  * ============================================
@@ -36,13 +31,6 @@ section:has(#graph) {
   float: right;
 }
 
-/* ============================================
- * Vector Section
- * ============================================
- */
-
-.drop-down {
-  width: 100%;
 }
 
 /* ============================================
@@ -72,6 +60,16 @@ section:has(#graph) {
 }
 
 /* ============================================
+ * Vector Section
+ * ============================================
+ */
+
+#vector-sect__add-vector {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================
  * Utility Classes
  * ============================================
  */
@@ -88,7 +86,7 @@ section:has(#graph) {
 
 .input-matrix__inputs {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   row-gap: 0.5em;
 }
 
@@ -160,5 +158,7 @@ section:has(#graph) {
 }
 
 .entry-input-pair {
+  display: flex;
   column-gap: 1em;
+  row-gap: 1em;
 }

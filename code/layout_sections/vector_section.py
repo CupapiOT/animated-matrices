@@ -33,31 +33,11 @@ def create_vector_section(app) -> html.Section:
                     ),
                 ],
             ),
+            html.Hr(),
             html.Div(
+                id="vector-sect__add-vector",
                 className="entry-input-pair",
                 children=[
-                    dcc.Input(
-                        id={
-                            "type": "interactable",
-                            "name": "new-vector-entry-name",
-                        },
-                        className="drop-down",
-                        type="text",
-                        placeholder="Name",
-                    ),
-                    dbc.Button(
-                        children="Add Vector",
-                        id={
-                            "type": "interactable",
-                            "name": "add-vector-button",
-                        },
-                        className="interactable",
-                        n_clicks=0,
-                    ),
-                ],
-            ),
-            html.Div(
-                [
                     dcc.Dropdown(
                         id={
                             "type": "interactable",
@@ -73,9 +53,31 @@ def create_vector_section(app) -> html.Section:
                         ],
                         value="black",
                     ),
-                    html.Hr(),
-                ]
+                    html.Div(
+                        className="entry-input-pair",
+                        children=[
+                            dcc.Input(
+                                id={
+                                    "type": "interactable",
+                                    "name": "new-vector-entry-name",
+                                },
+                                type="text",
+                                placeholder="Name",
+                            ),
+                            dbc.Button(
+                                children="Add Vector",
+                                id={
+                                    "type": "interactable",
+                                    "name": "add-vector-button",
+                                },
+                                className="interactable",
+                                n_clicks=0,
+                            ),
+                        ],
+                    ),
+                ],
             ),
+            html.Hr(),
             html.Div(
                 className="entry-input-pair",
                 children=[
