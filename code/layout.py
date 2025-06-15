@@ -11,7 +11,6 @@ from layout_sections.graph_section import create_graph_section
 def create_layout(app) -> html.Main:
     vector_tab = dbc.Card(dbc.CardBody(create_vector_section(app)))
     matrix_tab = dbc.Card(dbc.CardBody(create_matrix_section()))
-    logs_tab = dbc.Card(dbc.CardBody(create_logs_section()))
     return html.Main(
         [
             html.H1("2D Matrix Visualizer", className="visually-hidden"),
@@ -20,10 +19,10 @@ def create_layout(app) -> html.Main:
                 [
                     dbc.Tab(matrix_tab, label="Matrices", tab_id="matrix-section-tab"),
                     dbc.Tab(vector_tab, label="Vectors", tab_id="vector-section-tab"),
-                    dbc.Tab(logs_tab, label="Logs", tab_id="log-section-tab"),
                 ],
                 id="section-tabs",
                 active_tab="matrix-section-tab",
             ),
-        ]
+            create_logs_section(),
+        ],
     )
