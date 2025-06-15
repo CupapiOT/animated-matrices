@@ -42,13 +42,13 @@ class MatrixTransformationsApp:
         stored_vectors: Vectors,
         previous_vectors: list[Vectors],
         inverse_matrix: Matrix | None,
-    ) -> tuple[list[Vectors], str]:
+    ) -> tuple[list[Vectors], str | None]:
         """Only used within the undo_matrix method, which is defined
         in `self.register_callback`."""
         if len(stored_vectors) <= len(previous_vectors[-1]):
-            return previous_vectors, ""
+            return previous_vectors, None
 
-        new_output_log = ""
+        new_output_log = None
         new_previous_vectors = previous_vectors.copy()
         new_keys = set(stored_vectors) - (set(new_previous_vectors[-1]))
         new_vector_dict = {key: stored_vectors[key] for key in new_keys}
@@ -369,15 +369,6 @@ class MatrixTransformationsApp:
             previous_vectors: list[Vectors],
             stored_vectors: Vectors,
         ) -> tuple:
-            def calculate_longest_vector_mag(vectors: Vectors) -> Number:
-                magnitude_of_longest_vector: Number = -float("inf")
-                for (vector_coords), _ in vectors.values():
-                    vector_mag = np.linalg.norm(np.array(vector_coords))
-                    magnitude_of_longest_vector = max(
-                        magnitude_of_longest_vector, float(vector_mag)
-                    )
-                return magnitude_of_longest_vector
-
             if not animation_steps:
                 return no_update, True, no_update
 
@@ -390,9 +381,9 @@ class MatrixTransformationsApp:
             # Get the appropriate scale of the graph.
             # TODO: Finish this based on the final scale of every vector.
             first_frame_vectors = vectors_to_animate
-            first_frame_mag = calculate_longest_vector_mag(first_frame_vectors)
+            first_frame_mag = self.calculate_longest_vector_mag(first_frame_vectors)
             last_frame_vectors = stored_vectors.copy()
-            last_frame_mag = calculate_longest_vector_mag(last_frame_vectors)
+            last_frame_mag = self.calculate_longest_vector_mag(last_frame_vectors)
             scale = max(first_frame_mag, last_frame_mag) * 1.1
 
             return (
@@ -616,7 +607,8 @@ class MatrixTransformationsApp:
             new_previous_vectors, output_log_updates = self._handle_newly_added_vectors(
                 new_stored_vectors, new_previous_vectors, inverse_matrix
             )
-            new_output_logs.append(output_log_updates)
+            if output_log_updates is not None:
+                new_output_logs.append(output_log_updates)
 
             new_undone_matrices[last_matrix_name] = new_stored_matrices.pop(
                 last_matrix_name
@@ -624,9 +616,11 @@ class MatrixTransformationsApp:
 
             restored_vectors = new_previous_vectors.pop()
 
+            graph_scale = self.calculate_longest_vector_mag(restored_vectors) * 1.1
+
             return (
                 new_stored_matrices,
-                create_figure(restored_vectors),
+                create_figure(restored_vectors, graph_scale),
                 restored_vectors,
                 new_previous_vectors,
                 new_undone_matrices,
@@ -852,6 +846,16 @@ class MatrixTransformationsApp:
                 html.Li(className="log-sect__list__log", children=log)
                 for log in output_logs
             ]
+
+    @staticmethod
+    def calculate_longest_vector_mag(vectors: Vectors) -> Number:
+        magnitude_of_longest_vector: Number = -float("inf")
+        for (vector_coords), _ in vectors.values():
+            vector_mag = np.linalg.norm(np.array(vector_coords))
+            magnitude_of_longest_vector = max(
+                magnitude_of_longest_vector, float(vector_mag)
+            )
+        return magnitude_of_longest_vector
 
     @staticmethod
     def apply_matrix_to_vectors(matrix: Matrix, vectors: Vectors) -> Vectors:
