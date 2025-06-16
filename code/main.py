@@ -222,7 +222,6 @@ class MatrixTransformationsApp:
             stored_vectors: Vectors,
             previous_vectors: list[Vectors],
         ) -> tuple:
-            print(stored_vectors)
             if not name:
                 name = list(stored_vectors.keys())[-1]
             if name not in stored_vectors:
@@ -812,7 +811,7 @@ class MatrixTransformationsApp:
         )
         def update_matrix_list(
             stored_matrices: MatrixDict,
-        ) -> tuple[list[dl.DashLatex], dl.DashLatex]:
+        ) -> tuple[list[html.Li], dl.DashLatex]:
             def smart_format(value):
                 return ("%.5f" % value).rstrip("0").rstrip(".")
 
@@ -830,8 +829,12 @@ class MatrixTransformationsApp:
                 )
                 current_matrix = current_matrix.strip()
                 new_list.append(current_matrix)
-            matrix_list: list[dl.DashLatex] = [
-                dl.DashLatex(mat_latex) for mat_latex in new_list
+            matrix_list: list[html.Li] = [
+                html.Li(
+                    className="matrix-sect__matrix-list__item",
+                    children=dl.DashLatex(mat_latex),
+                )
+                for mat_latex in new_list
             ]
             latest_matrix = new_list[-1] if len(new_list) else ""
             return matrix_list, dl.DashLatex(latest_matrix)

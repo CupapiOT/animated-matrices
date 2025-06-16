@@ -168,7 +168,7 @@ def create_matrix_section() -> html.Section:
             dbc.Tabs(
                 [
                     dbc.Tab(
-                        html.Div(
+                        html.Ol(
                             "No matrices right now.",
                             id="matrix-sect__matrix-list",
                             className="matrix-section__logs",
