@@ -845,9 +845,41 @@ class MatrixTransformationsApp:
             prevent_initial_call=True,
         )
         def update_output_logs_diplay(output_logs: list[str]) -> list[html.Li]:
+            def create_log_span(log: str, repetition_count: int) -> html.Span:
+                return html.Span(
+                    children=[
+                        log,
+                        html.Span(
+                            className="log-repetition-count",
+                            children=(
+                                f" [×{repetition_count + 1}]"
+                                if repetition_count > 0
+                                else ""
+                            ),
+                        ),
+                    ]
+                )
+
+            logs_to_be_displayed: list[html.Span] = []
+            previous_log = output_logs[0]
+            stack_repeat_count = 0
+            for log in output_logs[1:]:
+                if log == previous_log:
+                    stack_repeat_count += 1
+                    continue
+                logs_to_be_displayed.append(
+                    create_log_span(previous_log, stack_repeat_count)
+                )
+                previous_log = log
+                stack_repeat_count = 0
+            if previous_log is not None:
+                logs_to_be_displayed.append(
+                    create_log_span(previous_log, stack_repeat_count)
+                )
+
             return [
                 html.Li(className="log-sect__list__log", children=log)
-                for log in output_logs
+                for log in logs_to_be_displayed
             ]
 
     @staticmethod

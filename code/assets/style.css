@@ -210,6 +210,11 @@ section:has(#graph) {
   transform: scaleX(-1);
 }
 
+.log-repetition-count {
+  color: #444444;
+  font-size: 0.75em;
+}
+
 .entry-input-pair {
   display: flex;
   column-gap: 1em;
