@@ -1,5 +1,6 @@
+from dash.exceptions import PreventUpdate
 import numpy as np
-from dash import Dash, callback_context, no_update, ALL, html
+from dash import Dash, callback_context, _callback, no_update, ALL, html
 import dash_bootstrap_components as dbc
 import dash_latex as dl
 from dash.dependencies import Input, Output, State
@@ -844,7 +845,9 @@ class MatrixTransformationsApp:
             [Input("output-logs", "data")],
             prevent_initial_call=True,
         )
-        def update_output_logs_diplay(output_logs: list[str]) -> list[html.Li]:
+        def update_output_logs_diplay(
+            output_logs: list[str],
+        ) -> list[html.Li] | _callback.NoUpdate:
             def create_log_span(log: str, repetition_count: int) -> html.Span:
                 return html.Span(
                     children=[
@@ -861,7 +864,14 @@ class MatrixTransformationsApp:
                 )
 
             logs_to_be_displayed: list[html.Span] = []
-            previous_log = output_logs[0]
+            try:
+                previous_log = output_logs[0]
+            except IndexError:
+                print(
+                    "Warning: Output logs was updated but there are no logs to display. "
+                    "This is usually harmless."
+                )
+                raise PreventUpdate
             stack_repeat_count = 0
             for log in output_logs[1:]:
                 if log == previous_log:
