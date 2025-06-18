@@ -595,7 +595,6 @@ class MatrixTransformationsApp:
             new_stored_vectors = stored_vectors.copy()
             new_previous_vectors = previous_vectors.copy()
             new_undone_matrices = undone_matrices.copy()
-            new_output_logs = output_logs
 
             last_matrix_name = list(new_stored_matrices.keys())[-1]
             last_matrix = np.array(new_stored_matrices[last_matrix_name])
@@ -606,8 +605,6 @@ class MatrixTransformationsApp:
             new_previous_vectors, output_log_updates = self._handle_newly_added_vectors(
                 new_stored_vectors, new_previous_vectors, inverse_matrix
             )
-            if output_log_updates is not None:
-                new_output_logs.append(output_log_updates)
 
             new_undone_matrices[last_matrix_name] = new_stored_matrices.pop(
                 last_matrix_name
@@ -617,13 +614,16 @@ class MatrixTransformationsApp:
 
             graph_scale = self.calculate_longest_vector_mag(restored_vectors) * 1.1
 
+            if output_log_updates is not None:
+                output_logs.append(output_log_updates)
+
             return (
                 new_stored_matrices,
                 create_figure(restored_vectors, graph_scale),
                 restored_vectors,
                 new_previous_vectors,
                 new_undone_matrices,
-                new_output_logs,
+                output_logs if output_log_updates is not None else no_update,
             )
 
         @self.app.callback(
@@ -656,15 +656,15 @@ class MatrixTransformationsApp:
             stored_vectors: Vectors,
             previous_vectors: list[Vectors],
             undone_matrices: MatrixDict,
-            animation_steps: list[Matrix],
             output_logs: list[str],
+            animation_steps: list[Matrix],
         ) -> tuple:
             # A condition to check for an empty `stored_matrices` is
             # not needed because `undone_matrices` may not be empty
             # while `stored_matrices` is empty, but if `undone_matrices`
             # is empty, then `stored_matrices` is for sure empty too.
-            if not stored_matrices:
-                output_logs.append("Redo Matrix: No matrices exist.")
+            if not undone_matrices:
+                output_logs.append("No matrices to redo.")
                 return (no_update,) * 6 + (output_logs,)
 
             last_undone_matrix_name = list(undone_matrices.keys())[-1]
@@ -778,7 +778,7 @@ class MatrixTransformationsApp:
                 {},  # Empty undone matrices.
                 False,
                 new_steps,
-                output_logs,
+                no_update,
             )
 
         @self.app.callback(
