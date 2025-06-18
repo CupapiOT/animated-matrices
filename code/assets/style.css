@@ -20,10 +20,13 @@ main {
 }
 
 #section-tabs {
+  margin-top: 1rem;
+  margin-left: 1rem;
   grid-area: navigation;
 }
 
 #section-tabs + div {
+  margin-left: 1rem;
   grid-area: tab-content;
 }
 
@@ -42,6 +45,7 @@ section:has(#graph) {
   /* aspect-ratio: calc(0.565 * (16 / 9)); */
   aspect-ratio: calc(14 / 9);
   height: 100vmin;
+  max-width: 75vw;
   float: right;
 }
 

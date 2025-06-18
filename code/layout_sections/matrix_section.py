@@ -176,6 +176,9 @@ def create_matrix_section() -> html.Section:
                         label="All Matrices",
                         tab_id="matrix-sect__all-matrices",
                     ),
+                    # Currently unused, but this stays for future plans.
+                    # Will probably replace this with "matrix info"
+                    # To see information regarding the current matrix.
                     dbc.Tab(
                         html.Div(
                             "No matrices right now.",
@@ -184,6 +187,7 @@ def create_matrix_section() -> html.Section:
                         ),
                         label="Latest Matrix",
                         tab_id="matrix-sect__latest-matrix",
+                        tab_class_name="visually-hidden"
                     ),
                 ]
             ),
