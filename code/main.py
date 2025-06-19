@@ -184,7 +184,15 @@ class MatrixTransformationsApp:
             vector_name = name if name else (LOWER_LETTERS[n_clicks % 26 - 1])
             stored_vectors[vector_name] = [(x, y), color]
             if not previous_vectors:
-                return (create_figure(stored_vectors), stored_vectors, [], output_logs)
+                return (
+                    create_figure(
+                        vectors=stored_vectors,
+                        scale=(self.calculate_longest_vector_mag(stored_vectors) * 1.1),
+                    ),
+                    stored_vectors,
+                    [],  # Empty list of undone-vectors.
+                    output_logs,
+                )
 
             # This is done so that any recently edited vectors are kept
             # visually consistent after any matrix-undo-s.
@@ -193,7 +201,10 @@ class MatrixTransformationsApp:
             )
 
             return (
-                create_figure(stored_vectors),
+                create_figure(
+                    vectors=stored_vectors,
+                    scale=(self.calculate_longest_vector_mag(stored_vectors) * 1.1),
+                ),
                 stored_vectors,
                 list(reversed(new_previous_vectors)),
                 new_output_logs,
@@ -226,7 +237,14 @@ class MatrixTransformationsApp:
             if not name:
                 name = list(stored_vectors.keys())[-1]
             if name not in stored_vectors:
-                return (create_figure(stored_vectors), stored_vectors, previous_vectors)
+                return (
+                    create_figure(
+                        vectors=stored_vectors,
+                        scale=self.calculate_longest_vector_mag(stored_vectors) * 1.1,
+                    ),
+                    stored_vectors,
+                    previous_vectors,
+                )
 
             del stored_vectors[name]
             for vectors in previous_vectors:
@@ -235,7 +253,14 @@ class MatrixTransformationsApp:
                 except KeyError:  # Doesn't matter, just keep deleting.
                     continue
 
-            return (create_figure(stored_vectors), stored_vectors, previous_vectors)
+            return (
+                create_figure(
+                    vectors=stored_vectors,
+                    scale=self.calculate_longest_vector_mag(stored_vectors) * 1.1,
+                ),
+                stored_vectors,
+                previous_vectors,
+            )
 
         def create_frames(
             end_matrix: np.ndarray,
@@ -382,12 +407,12 @@ class MatrixTransformationsApp:
             # TODO: Finish this based on the final scale of every vector.
             first_frame_vectors = vectors_to_animate
             first_frame_mag = self.calculate_longest_vector_mag(first_frame_vectors)
-            last_frame_vectors = stored_vectors.copy()
+            last_frame_vectors = stored_vectors
             last_frame_mag = self.calculate_longest_vector_mag(last_frame_vectors)
-            scale = max(first_frame_mag, last_frame_mag) * 1.1
+            graph_scale = max(first_frame_mag, last_frame_mag) * 1.1
 
             return (
-                create_figure(interpolated_vectors, scale),
+                create_figure(vectors=interpolated_vectors, scale=graph_scale),
                 no_update,
                 animation_steps[1:] if animation_steps else [],
             )
@@ -613,14 +638,15 @@ class MatrixTransformationsApp:
 
             restored_vectors = new_previous_vectors.pop()
 
-            graph_scale = self.calculate_longest_vector_mag(restored_vectors) * 1.1
-
             if output_log_updates is not None:
                 output_logs.append(output_log_updates)
 
             return (
                 new_stored_matrices,
-                create_figure(restored_vectors, graph_scale),
+                create_figure(
+                    vectors=restored_vectors,
+                    scale=self.calculate_longest_vector_mag(restored_vectors) * 1.1,
+                ),
                 restored_vectors,
                 new_previous_vectors,
                 new_undone_matrices,
