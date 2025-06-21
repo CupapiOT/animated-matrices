@@ -1,17 +1,25 @@
+from dash.exceptions import PreventUpdate
 import numpy as np
-from dash import Dash, callback_context, dcc, html, no_update, ALL
+from dash import Dash, callback_context, _callback, no_update, ALL, html
+import dash_bootstrap_components as dbc
+import dash_latex as dl
 from dash.dependencies import Input, Output, State
 import re
 from constants import *
-from create_figures import create_2d_basis_vectors, create_figure
+from create_figures import create_figure
 from project_types import *
 from matrix_utils import safe_inverse
 from general_utils import set_nonetype_to_zero
+from layout import create_layout
 
 
 class MatrixTransformationsApp:
     def __init__(self, basis_vectors):
-        self.app = Dash("Matrix Transformations")
+        self.app = Dash(
+            title="Matrix Transformations",
+            external_stylesheets=[dbc.themes.BOOTSTRAP],
+            meta_tags=META_TAGS,
+        )
 
         self.BASIS_VECTORS = basis_vectors
 
@@ -27,7 +35,7 @@ class MatrixTransformationsApp:
         interval_ms = TIME_FOR_ANIMATION_MS / self.animation_frames_count
         self.interval_ms = max(int(interval_ms), 1)  # Always at least 1ms
 
-        self.app.layout = self._create_layout()
+        self.app.layout = create_layout(self)
         self._register_callbacks()
 
     def _handle_newly_added_vectors(
@@ -35,13 +43,13 @@ class MatrixTransformationsApp:
         stored_vectors: Vectors,
         previous_vectors: list[Vectors],
         inverse_matrix: Matrix | None,
-    ) -> tuple[list[Vectors], str]:
+    ) -> tuple[list[Vectors], str | None]:
         """Only used within the undo_matrix method, which is defined
         in `self.register_callback`."""
         if len(stored_vectors) <= len(previous_vectors[-1]):
-            return previous_vectors, ""
+            return previous_vectors, None
 
-        new_output_log = ""
+        new_output_log = None
         new_previous_vectors = previous_vectors.copy()
         new_keys = set(stored_vectors) - (set(new_previous_vectors[-1]))
         new_vector_dict = {key: stored_vectors[key] for key in new_keys}
@@ -52,9 +60,9 @@ class MatrixTransformationsApp:
             new_previous_vectors[-1].update(inverted_new_vectors)
         else:
             new_previous_vectors[-1].update(new_vector_dict)
-            new_output_log += (
-                f"Newly added vector(s) {list(new_keys)} were not "
-                f"changed due to how the previous matrix was unable "
+            new_output_log = (
+                f"The coordinates of newly added vector(s) {list(new_keys)} "
+                f"were not updated due to how the previous matrix was unable "
                 f"to be inverted. "
             )
 
@@ -75,8 +83,8 @@ class MatrixTransformationsApp:
             y: Number,
             color: str,
             previous_vectors: list[Vectors],
-            output_logs: str,
-        ) -> tuple[list[Vectors], str]:
+            output_logs: list[str],
+        ) -> tuple[list[Vectors], list[str]]:
             """Only used within the `add_or_edit_vector` method as a
             place to refactor code from `add_or_edit_vector`, which is
             defined in `self.register_callback`, directly below this
@@ -126,7 +134,7 @@ class MatrixTransformationsApp:
                     )
                     vectors[vector_name] = edited_vector
 
-                    new_output_logs += (
+                    new_output_logs.append(
                         f'Edited vector "{vector_name}" was unable to be '
                         f"properly shown before the matrix "
                         f'"{its_matrixs_name}" was applied due to it being '
@@ -139,7 +147,7 @@ class MatrixTransformationsApp:
             Output("graph", "figure", allow_duplicate=True),
             Output("vector-store", "data", allow_duplicate=True),
             Output("previous-vector-store", "data", allow_duplicate=True),
-            Output("output-logs", "children", allow_duplicate=True),
+            Output("output-logs", "data", allow_duplicate=True),
             [
                 Input(
                     {"type": "interactable", "name": "add-vector-button"}, "n_clicks"
@@ -157,7 +165,7 @@ class MatrixTransformationsApp:
             [
                 State("matrix-store", "data"),
                 State("previous-vector-store", "data"),
-                State("output-logs", "children"),
+                State("output-logs", "data"),
             ],
             prevent_initial_call=True,
         )
@@ -170,22 +178,33 @@ class MatrixTransformationsApp:
             name: str,
             stored_matrices: MatrixDict,
             previous_vectors: list[Vectors],
-            output_logs: str,
+            output_logs: list[str],
         ) -> tuple:
             x, y = _vector_getter(x_val, y_val)
             vector_name = name if name else (LOWER_LETTERS[n_clicks % 26 - 1])
             stored_vectors[vector_name] = [(x, y), color]
             if not previous_vectors:
-                return (create_figure(stored_vectors), stored_vectors, [], output_logs)
+                return (
+                    create_figure(
+                        vectors=stored_vectors,
+                        scale=(self.calculate_longest_vector_mag(stored_vectors) * 1.1),
+                    ),
+                    stored_vectors,
+                    [],  # Empty list of undone-vectors.
+                    output_logs,
+                )
 
             # This is done so that any recently edited vectors are kept
-            # visually consistent after the undo.
+            # visually consistent after any matrix-undo-s.
             new_previous_vectors, new_output_logs = _update_all_previous_vectors(
                 stored_matrices, vector_name, x, y, color, previous_vectors, output_logs
             )
 
             return (
-                create_figure(stored_vectors),
+                create_figure(
+                    vectors=stored_vectors,
+                    scale=(self.calculate_longest_vector_mag(stored_vectors) * 1.1),
+                ),
                 stored_vectors,
                 list(reversed(new_previous_vectors)),
                 new_output_logs,
@@ -218,7 +237,14 @@ class MatrixTransformationsApp:
             if not name:
                 name = list(stored_vectors.keys())[-1]
             if name not in stored_vectors:
-                return (create_figure(stored_vectors), stored_vectors, previous_vectors)
+                return (
+                    create_figure(
+                        vectors=stored_vectors,
+                        scale=self.calculate_longest_vector_mag(stored_vectors) * 1.1,
+                    ),
+                    stored_vectors,
+                    previous_vectors,
+                )
 
             del stored_vectors[name]
             for vectors in previous_vectors:
@@ -227,7 +253,14 @@ class MatrixTransformationsApp:
                 except KeyError:  # Doesn't matter, just keep deleting.
                     continue
 
-            return (create_figure(stored_vectors), stored_vectors, previous_vectors)
+            return (
+                create_figure(
+                    vectors=stored_vectors,
+                    scale=self.calculate_longest_vector_mag(stored_vectors) * 1.1,
+                ),
+                stored_vectors,
+                previous_vectors,
+            )
 
         def create_frames(
             end_matrix: np.ndarray,
@@ -278,7 +311,6 @@ class MatrixTransformationsApp:
 
         @self.app.callback(
             Output("matrix-store", "data", allow_duplicate=True),
-            Output("matrix-list", "children", allow_duplicate=True),
             # Output('graph', 'figure', allow_duplicate=True),
             Output("vector-store", "data", allow_duplicate=True),
             Output("previous-vector-store", "data", allow_duplicate=True),
@@ -337,7 +369,6 @@ class MatrixTransformationsApp:
 
             return (
                 stored_matrices,
-                str(stored_matrices),
                 # create_figure(restored_vectors),
                 new_vectors,
                 previous_vectors,
@@ -354,11 +385,14 @@ class MatrixTransformationsApp:
                 Input("animation-interval", "n_intervals"),
                 State("animation-steps", "data"),
             ],
-            [State("previous-vector-store", "data")],
+            [State("previous-vector-store", "data"), State("vector-store", "data")],
             prevent_initial_call=True,
         )
         def animate_graph(
-            _, animation_steps: list[Matrix], previous_vectors: list[Vectors]
+            _,
+            animation_steps: list[Matrix],
+            previous_vectors: list[Vectors],
+            stored_vectors: Vectors,
         ) -> tuple:
             if not animation_steps:
                 return no_update, True, no_update
@@ -368,8 +402,17 @@ class MatrixTransformationsApp:
             interpolated_vectors = self.apply_matrix_to_vectors(
                 current_frame, vectors_to_animate
             )
+
+            # Get the appropriate scale of the graph.
+            # TODO: Finish this based on the final scale of every vector.
+            first_frame_vectors = vectors_to_animate
+            first_frame_mag = self.calculate_longest_vector_mag(first_frame_vectors)
+            last_frame_vectors = stored_vectors
+            last_frame_mag = self.calculate_longest_vector_mag(last_frame_vectors)
+            graph_scale = max(first_frame_mag, last_frame_mag) * 1.1
+
             return (
-                create_figure(interpolated_vectors),
+                create_figure(vectors=interpolated_vectors, scale=graph_scale),
                 no_update,
                 animation_steps[1:] if animation_steps else [],
             )
@@ -430,14 +473,13 @@ class MatrixTransformationsApp:
 
         @self.app.callback(
             Output("matrix-store", "data", allow_duplicate=True),
-            Output("matrix-list", "children", allow_duplicate=True),
             # Output('graph', 'figure', allow_duplicate=True),
             Output("vector-store", "data", allow_duplicate=True),
             Output("previous-vector-store", "data", allow_duplicate=True),
             Output("undone-matrices-store", "data", allow_duplicate=True),
-            Output("output-logs", "children", allow_duplicate=True),
             Output("animation-interval", "disabled", allow_duplicate=True),
             Output("animation-steps", "data", allow_duplicate=True),
+            Output("output-logs", "data", allow_duplicate=True),
             [
                 Input(
                     {"type": "interactable", "name": "inverse-matrix-button"},
@@ -452,7 +494,7 @@ class MatrixTransformationsApp:
                 State("matrix-store", "data"),
                 State("vector-store", "data"),
                 State("previous-vector-store", "data"),
-                State("output-logs", "children"),
+                State("output-logs", "data"),
             ],
             [State("animation-steps", "data")],
             prevent_initial_call=True,
@@ -463,19 +505,21 @@ class MatrixTransformationsApp:
             stored_matrices: MatrixDict,
             stored_vectors: Vectors,
             previous_vectors: list[Vectors],
-            output_logs: str,
+            output_logs: list[str],
             animation_steps: list[Matrix],
         ) -> tuple:
             def _validate_input(
                 name: str | None,
                 stored_matrices_: MatrixDict | tuple | list,
-                output_logs_: str,
-            ) -> tuple[bool, str]:
+                output_logs_: list[str],
+            ) -> tuple[bool, list[str]]:
                 if not stored_matrices_:
-                    output_logs_ += "No matrices exist. "
+                    output_logs_.append("Apply Inverse: No matrices exist. ")
                     return False, output_logs_
                 if name and (name not in stored_matrices_):
-                    output_logs_ += f'Matrix "{matrix_to_invert}" does not ' f"exist. "
+                    output_logs_.append(
+                        f"Apply Inverse: Matrix '{matrix_to_invert}' does not exist."
+                    )
                     return False, output_logs_
 
                 return True, output_logs_
@@ -496,7 +540,7 @@ class MatrixTransformationsApp:
                 output_logs_=output_logs,
             )
             if not valid:
-                return (no_update,) * 5 + (new_output_logs,) + (no_update,) * 2
+                return (no_update,) * 6 + (new_output_logs,)
 
             name = (
                 matrix_to_invert
@@ -507,11 +551,15 @@ class MatrixTransformationsApp:
             selected_matrix = np.array(stored_matrices[name])
             inverted_matrix = safe_inverse(selected_matrix)
             if inverted_matrix is None:
-                log = f'Matrix "{name}" does not have an inverse. '
-                new_output_logs += log
-                return (no_update,) * 5 + (new_output_logs,) + (no_update,) * 2
+                new_output_logs.append(f"Matrix '{name}' does not have an inverse.")
+                return (no_update,) * 6 + (new_output_logs,)
 
-            inverse_name = "I_" + name
+            inverse_name = "I_{" + name + "}"
+            # TODO: Create better name handling appropriate for math expressions.
+            # if "^{-1}" in name:
+            #     inverse_name = "(" + name + ")^{-1}"
+            # else:
+            #     inverse_name = name + r"^{-1}"
             new_name = generate_unique_matrix_name(
                 name=inverse_name, existing_names=stored_matrices
             )
@@ -527,24 +575,22 @@ class MatrixTransformationsApp:
 
             return (
                 stored_matrices,
-                str(stored_matrices),
                 # create_figure(new_vectors),
                 new_vectors,
                 previous_vectors,
                 {},  # Empty undone matrices.
-                new_output_logs,
                 False,
                 new_steps,
+                new_output_logs,
             )
 
         @self.app.callback(
             Output("matrix-store", "data", allow_duplicate=True),
-            Output("matrix-list", "children", allow_duplicate=True),
             Output("graph", "figure", allow_duplicate=True),
             Output("vector-store", "data", allow_duplicate=True),
             Output("previous-vector-store", "data", allow_duplicate=True),
             Output("undone-matrices-store", "data", allow_duplicate=True),
-            Output("output-logs", "children", allow_duplicate=True),
+            Output("output-logs", "data", allow_duplicate=True),
             [
                 Input(
                     {"type": "interactable", "name": "undo-matrix-button"}, "n_clicks"
@@ -555,7 +601,7 @@ class MatrixTransformationsApp:
                 State("vector-store", "data"),
                 State("previous-vector-store", "data"),
                 State("undone-matrices-store", "data"),
-                State("output-logs", "children"),
+                State("output-logs", "data"),
             ],
             prevent_initial_call=True,
         )
@@ -565,27 +611,26 @@ class MatrixTransformationsApp:
             stored_vectors: Vectors,
             previous_vectors: list[Vectors],
             undone_matrices: MatrixDict,
-            output_logs: str,
+            output_logs: list[str],
         ) -> tuple:
             if not stored_matrices:
-                return (no_update,) * 7
+                output_logs.append("Undo Matrix: No matrices exist.")
+                return (no_update,) * 5 + (output_logs,)
 
             new_stored_matrices = stored_matrices.copy()
             new_stored_vectors = stored_vectors.copy()
             new_previous_vectors = previous_vectors.copy()
             new_undone_matrices = undone_matrices.copy()
-            new_output_logs = output_logs
 
             last_matrix_name = list(new_stored_matrices.keys())[-1]
             last_matrix = np.array(new_stored_matrices[last_matrix_name])
             inverse_matrix = safe_inverse(last_matrix)
 
-            # This is done so that it doesn't delete any new vectors that
-            # were made before the undoing.
+            # This is done so that it doesn't delete any vectors that were made
+            # before the undoing.
             new_previous_vectors, output_log_updates = self._handle_newly_added_vectors(
                 new_stored_vectors, new_previous_vectors, inverse_matrix
             )
-            new_output_logs += output_log_updates
 
             new_undone_matrices[last_matrix_name] = new_stored_matrices.pop(
                 last_matrix_name
@@ -593,25 +638,30 @@ class MatrixTransformationsApp:
 
             restored_vectors = new_previous_vectors.pop()
 
+            if output_log_updates is not None:
+                output_logs.append(output_log_updates)
+
             return (
                 new_stored_matrices,
-                str(new_stored_matrices),
-                create_figure(restored_vectors),
+                create_figure(
+                    vectors=restored_vectors,
+                    scale=self.calculate_longest_vector_mag(restored_vectors) * 1.1,
+                ),
                 restored_vectors,
                 new_previous_vectors,
                 new_undone_matrices,
-                new_output_logs,
+                output_logs if output_log_updates is not None else no_update,
             )
 
         @self.app.callback(
             Output("matrix-store", "data", allow_duplicate=True),
-            Output("matrix-list", "children", allow_duplicate=True),
             # Output('graph', 'figure', allow_duplicate=True),
             Output("vector-store", "data", allow_duplicate=True),
             Output("previous-vector-store", "data", allow_duplicate=True),
             Output("undone-matrices-store", "data", allow_duplicate=True),
             Output("animation-interval", "disabled", allow_duplicate=True),
             Output("animation-steps", "data", allow_duplicate=True),
+            Output("output-logs", "data", allow_duplicate=True),
             [
                 Input(
                     {"type": "interactable", "name": "redo-matrix-button"}, "n_clicks"
@@ -622,6 +672,7 @@ class MatrixTransformationsApp:
                 State("vector-store", "data"),
                 State("previous-vector-store", "data"),
                 State("undone-matrices-store", "data"),
+                State("output-logs", "data"),
             ],
             [State("animation-steps", "data")],
             prevent_initial_call=True,
@@ -632,6 +683,7 @@ class MatrixTransformationsApp:
             stored_vectors: Vectors,
             previous_vectors: list[Vectors],
             undone_matrices: MatrixDict,
+            output_logs: list[str],
             animation_steps: list[Matrix],
         ) -> tuple:
             # A condition to check for an empty `stored_matrices` is
@@ -639,7 +691,8 @@ class MatrixTransformationsApp:
             # while `stored_matrices` is empty, but if `undone_matrices`
             # is empty, then `stored_matrices` is for sure empty too.
             if not undone_matrices:
-                return (no_update,) * 7
+                output_logs.append("No matrices to redo.")
+                return (no_update,) * 6 + (output_logs,)
 
             last_undone_matrix_name = list(undone_matrices.keys())[-1]
             stored_matrices[last_undone_matrix_name] = undone_matrices.pop(
@@ -659,25 +712,24 @@ class MatrixTransformationsApp:
 
             return (
                 stored_matrices,
-                str(stored_matrices),
                 # create_figure(restored_vectors),
                 restored_vectors,
                 previous_vectors,
                 undone_matrices,
                 False,
                 new_steps,
+                no_update,
             )
 
         @self.app.callback(
             Output("matrix-store", "data"),
-            Output("matrix-list", "children"),
             # Output('graph', 'figure'),
             Output("vector-store", "data"),
             Output("previous-vector-store", "data"),
             Output("undone-matrices-store", "data"),
-            Output("output-logs", "children"),
             Output("animation-interval", "disabled", allow_duplicate=True),
             Output("animation-steps", "data", allow_duplicate=True),
+            Output("output-logs", "data"),
             [
                 Input(
                     {"type": "interactable", "name": "repeat-matrix-button"}, "n_clicks"
@@ -691,7 +743,7 @@ class MatrixTransformationsApp:
                 State("matrix-store", "data"),
                 State("vector-store", "data"),
                 State("previous-vector-store", "data"),
-                State("output-logs", "children"),
+                State("output-logs", "data"),
             ],
             [State("animation-steps", "data")],
             prevent_initial_call=True,
@@ -702,19 +754,22 @@ class MatrixTransformationsApp:
             stored_matrices: MatrixDict,
             stored_vectors: Vectors,
             previous_vectors: list[Vectors],
-            output_logs: str,
+            output_logs: list[str],
             animation_steps: list[Matrix],
         ) -> tuple:
             def _validate_input(
                 name: str | None,
                 stored_matrices_: MatrixDict | tuple | list,
-                output_logs_: str,
-            ) -> tuple[bool, str]:
+                output_logs_: list[str],
+            ) -> tuple[bool, list[str]]:
+                print(output_logs_)
                 if not stored_matrices_:
-                    output_logs_ += "No matrices exist. "
+                    output_logs_.append("Repeat Matrix: No matrices exist.")
                     return False, output_logs_
                 if name and (name not in stored_matrices_):
-                    output_logs_ += f'Matrix "{name}" does not exist. '
+                    output_logs_.append(
+                        f"Repeat Matrix: Matrix '{name}' does not exist."
+                    )
                     return False, output_logs_
                 return True, output_logs_
 
@@ -724,7 +779,7 @@ class MatrixTransformationsApp:
                 output_logs_=output_logs,
             )
             if not valid:
-                return (no_update,) * 5 + (new_output_logs,) + (no_update,) * 2
+                return (no_update,) * 6 + (new_output_logs,)
 
             if not selected_matrix:
                 selected_matrix = list(stored_matrices.keys())[-1]
@@ -744,14 +799,13 @@ class MatrixTransformationsApp:
 
             return (
                 stored_matrices,
-                str(stored_matrices),
                 # create_figure(new_vectors),
                 new_vectors,
                 previous_vectors,
                 {},  # Empty undone matrices.
-                output_logs,
                 False,
                 new_steps,
+                no_update,
             )
 
         @self.app.callback(
@@ -776,451 +830,103 @@ class MatrixTransformationsApp:
             else:
                 return "Add Vector"
 
-    def _create_layout(self) -> html.Div:
-        return html.Div(
-            [
-                html.H1("Matrix Visualizer"),
-                html.Div(
-                    [
-                        dcc.Interval(
-                            id="animation-interval",
-                            disabled=True,
-                            interval=self.interval_ms,
-                            n_intervals=0,
-                        ),
-                        dcc.Store(id="animation-steps", data=[]),
-                        dcc.Graph(
-                            id="graph",
-                            figure=create_2d_basis_vectors(self.BASIS_VECTORS),
-                            style={
-                                "height": "1000%",
-                                "width": "70%",
-                                "display": "inline-block",
-                            },
-                        ),
-                        html.Div(
-                            [
-                                html.H2("Vectors"),
-                                dcc.Store(
-                                    id="vector-store", data={**self.BASIS_VECTORS}
-                                ),
-                                html.Div(
-                                    [
-                                        dcc.Input(
-                                            id={
-                                                "type": "interactable",
-                                                "name": "vector-entry-1",
-                                            },
-                                            className="interactable",
-                                            type="number",
-                                            style={
-                                                "marginBottom": "10px",
-                                                "width": "45%",
-                                                "marginRight": "5%",
-                                            },
-                                            placeholder="x",
-                                        ),
-                                        dcc.Input(
-                                            id={
-                                                "type": "interactable",
-                                                "name": "vector-entry-2",
-                                            },
-                                            className="interactable",
-                                            type="number",
-                                            style={
-                                                "marginBottom": "10px",
-                                                "width": "45%",
-                                            },
-                                            size="2",
-                                            placeholder="y",
-                                        ),
-                                    ],
-                                    style={
-                                        "width": "100%",
-                                        "display": "flex",
-                                        "flexDirection": "row",
-                                        "alignItems": "center",
-                                        "justifyContent": "center",
-                                    },
-                                ),
-                                html.Div(
-                                    [
-                                        dcc.Input(
-                                            id={
-                                                "type": "interactable",
-                                                "name": "new-vector-entry-name",
-                                            },
-                                            className="interactable",
-                                            type="text",
-                                            style={
-                                                "marginRight": "5%",
-                                                "marginBottom": "5%",
-                                                "width": "20%",
-                                            },
-                                            size="2",
-                                            placeholder="Name",
-                                        ),
-                                        html.Button(
-                                            children="Add Vector",
-                                            id={
-                                                "type": "interactable",
-                                                "name": "add-vector-button",
-                                            },
-                                            className="interactable",
-                                            style={
-                                                "marginBottom": "5%",
-                                                "width": "70%",
-                                            },
-                                            n_clicks=0,
-                                        ),
-                                    ],
-                                    style={
-                                        "width": "100%",
-                                        "display": "flex",
-                                        "flexDirection": "row",
-                                        "alignItems": "center",
-                                        "justifyContent": "center",
-                                    },
-                                ),
-                                html.Div(
-                                    [
-                                        dcc.Dropdown(
-                                            id={
-                                                "type": "interactable",
-                                                "name": "vector-entry-color",
-                                            },
-                                            className="interactable",
-                                            options=[
-                                                {
-                                                    "label": color.capitalize(),
-                                                    "value": color,
-                                                }
-                                                for color in COLORS
-                                            ],
-                                            value="black",
-                                        ),
-                                        html.Hr(
-                                            style={
-                                                "width": "100%",
-                                                "marginBottom": "15px",
-                                                "marginTop": "15px",
-                                            }
-                                        ),
-                                    ]
-                                ),
-                                html.Div(
-                                    [
-                                        dcc.Input(
-                                            id={
-                                                "type": "interactable",
-                                                "name": "delete-vector-entry-name",
-                                            },
-                                            className="interactable",
-                                            type="text",
-                                            style={
-                                                "marginRight": "5%",
-                                                "marginBottom": "5%",
-                                                "width": "20%",
-                                            },
-                                            size="2",
-                                            placeholder="Name",
-                                        ),
-                                        html.Button(
-                                            "Delete Vector",
-                                            id={
-                                                "type": "interactable",
-                                                "name": "delete-vector-button",
-                                            },
-                                            className="interactable",
-                                            style={
-                                                "marginBottom": "5%",
-                                                "width": "70%",
-                                            },
-                                        ),
-                                    ]
-                                ),
-                            ],
-                            style={
-                                "display": "flex",
-                                "flexDirection": "column",
-                                "marginLeft": "20px",
-                                "width": "200px",
-                            },
-                        ),
-                        html.Div(
-                            [
-                                html.H2("Matrices"),
-                                dcc.Store(id="matrix-store", data={}),
-                                html.Div(
-                                    [
-                                        html.Div(
-                                            [
-                                                dcc.Input(
-                                                    id={
-                                                        "type": "interactable",
-                                                        "name": "matrix-entry-1",
-                                                    },
-                                                    className="interactable",
-                                                    type="number",
-                                                    style={
-                                                        "marginBottom": "10px",
-                                                        "marginRight": "10px",
-                                                        "width": "80px",
-                                                    },
-                                                    size="2",
-                                                    placeholder="a",
-                                                ),
-                                                dcc.Input(
-                                                    id={
-                                                        "type": "interactable",
-                                                        "name": "matrix-entry-2",
-                                                    },
-                                                    className="interactable",
-                                                    type="number",
-                                                    style={
-                                                        "marginBottom": "10px",
-                                                        "width": "80px",
-                                                    },
-                                                    size="2",
-                                                    placeholder="b",
-                                                ),
-                                            ]
-                                        ),
-                                        html.Div(
-                                            [
-                                                dcc.Input(
-                                                    id={
-                                                        "type": "interactable",
-                                                        "name": "matrix-entry-3",
-                                                    },
-                                                    className="interactable",
-                                                    type="number",
-                                                    style={
-                                                        "marginBottom": "10px",
-                                                        "marginRight": "10px",
-                                                        "width": "80px",
-                                                    },
-                                                    size="2",
-                                                    placeholder="c",
-                                                ),
-                                                dcc.Input(
-                                                    id={
-                                                        "type": "interactable",
-                                                        "name": "matrix-entry-4",
-                                                    },
-                                                    className="interactable",
-                                                    type="number",
-                                                    style={
-                                                        "marginBottom": "10px",
-                                                        "width": "80px",
-                                                    },
-                                                    size="2",
-                                                    placeholder="d",
-                                                ),
-                                            ]
-                                        ),
-                                        html.Div(
-                                            [
-                                                dcc.Input(
-                                                    id={
-                                                        "type": "interactable",
-                                                        "name": "new-matrix-entry-name",
-                                                    },
-                                                    className="interactable",
-                                                    type="text",
-                                                    style={
-                                                        "width": "20%",
-                                                        "marginRight": "5%",
-                                                    },
-                                                    size="2",
-                                                    placeholder="Name",
-                                                ),
-                                                html.Button(
-                                                    "Add Matrix",
-                                                    id={
-                                                        "type": "interactable",
-                                                        "name": "add-matrix-button",
-                                                    },
-                                                    className="interactable",
-                                                    n_clicks=0,
-                                                    style={"width": "70%"},
-                                                ),
-                                            ],
-                                            style={
-                                                "width": "100%",
-                                                "display": "flex",
-                                                "flexDirection": "row",
-                                                "alignItems": "center",
-                                                "justifyContent": "center",
-                                            },
-                                        ),
-                                        html.Hr(
-                                            style={
-                                                "marginBottom": "15px",
-                                                "marginTop": "15px",
-                                                "width": "100%",
-                                            }
-                                        ),
-                                        html.Div(
-                                            [
-                                                dcc.Input(
-                                                    id={
-                                                        "type": "interactable",
-                                                        "name": "inverse-matrix-entry-name",
-                                                    },
-                                                    className="interactable",
-                                                    type="text",
-                                                    style={
-                                                        "width": "20%",
-                                                        "marginRight": "5%",
-                                                    },
-                                                    size="2",
-                                                    placeholder="Name",
-                                                ),
-                                                html.Button(
-                                                    "Apply Inverse",
-                                                    id={
-                                                        "type": "interactable",
-                                                        "name": "inverse-matrix-button",
-                                                    },
-                                                    className="interactable",
-                                                    n_clicks=0,
-                                                    style={"width": "70%"},
-                                                ),
-                                            ],
-                                            style={
-                                                "width": "100%",
-                                                "display": "flex",
-                                                "flexDirection": "row",
-                                                "alignItems": "center",
-                                                "justifyContent": "center",
-                                            },
-                                        ),
-                                        html.Hr(
-                                            style={
-                                                "marginBottom": "15px",
-                                                "marginTop": "15px",
-                                                "width": "100%",
-                                            }
-                                        ),
-                                        html.Div(
-                                            [
-                                                dcc.Store(
-                                                    id="previous-vector-store", data=[]
-                                                ),
-                                                html.Button(
-                                                    "Undo Last Matrix",
-                                                    id={
-                                                        "type": "interactable",
-                                                        "name": "undo-matrix-button",
-                                                    },
-                                                    className="interactable",
-                                                    n_clicks=0,
-                                                    style={
-                                                        "width": "100%",
-                                                        "marginBottom": "5%",
-                                                    },
-                                                ),
-                                                dcc.Store(
-                                                    id="undone-matrices-store", data={}
-                                                ),
-                                                html.Button(
-                                                    "Redo Last Matrix",
-                                                    id={
-                                                        "type": "interactable",
-                                                        "name": "redo-matrix-button",
-                                                    },
-                                                    className="interactable",
-                                                    n_clicks=0,
-                                                    style={"width": "100%"},
-                                                ),
-                                                html.Hr(
-                                                    style={
-                                                        "marginBottom": "15px",
-                                                        "marginTop": "15px",
-                                                        "width": "100%",
-                                                    }
-                                                ),
-                                                html.Div(
-                                                    [
-                                                        dcc.Input(
-                                                            id={
-                                                                "type": "interactable",
-                                                                "name": "repeat-matrix-entry-name",
-                                                            },
-                                                            className="interactable",
-                                                            type="text",
-                                                            style={
-                                                                "width": "20%",
-                                                                "marginRight": "5%",
-                                                            },
-                                                            size="2",
-                                                            placeholder="Name",
-                                                        ),
-                                                        html.Button(
-                                                            "Repeat Matrix",
-                                                            id={
-                                                                "type": "interactable",
-                                                                "name": "repeat-matrix-button",
-                                                            },
-                                                            className="interactable",
-                                                            n_clicks=0,
-                                                            style={"width": "70%"},
-                                                        ),
-                                                    ],
-                                                    style={
-                                                        "width": "100%",
-                                                        "display": "flex",
-                                                        "flexDirection": "row",
-                                                        "alignItems": "center",
-                                                        "justifyContent": "center",
-                                                    },
-                                                ),
-                                            ],
-                                            style={
-                                                "width": "100%",
-                                                "display": "flex",
-                                                "flexDirection": "column",
-                                                "alignItems": "center",
-                                                "justifyContent": "center",
-                                            },
-                                        ),
-                                    ],
-                                    style={
-                                        "display": "flex",
-                                        "flexDirection": "column",
-                                        "alignItems": "center",
-                                        "justifyContent": "center",
-                                    },
-                                ),
-                            ],
-                            style={
-                                "display": "flex",
-                                "flexDirection": "column",
-                                "alignItems": "center",
-                                "marginLeft": "20px",
-                                "width": "200px",
-                            },
-                        ),
-                    ],
-                    style={"display": "flex", "flexDirection": "row"},
-                ),
-                html.Div(
-                    [
-                        html.Label("List of Matrices", style={"marginBottom": "10px"}),
-                        html.Label("", id="matrix-list"),
-                        *([html.Br()] * 4),
-                        html.Label("Recent Logs:", style={"marginBottom": "10px"}),
-                        html.Label("", id="output-logs"),
-                    ],
-                    style={
-                        "display": "flex",
-                        "flexDirection": "column",
-                        "height": "500px",
-                    },
-                ),
-            ]
+        @self.app.callback(
+            Output("matrix-sect__matrix-list", "children", allow_duplicate=True),
+            Output("matrix-sect__latest-matrix", "children", allow_duplicate=True),
+            [Input("matrix-store", "data")],
+            prevent_initial_call=True,
         )
+        def update_matrix_list(
+            stored_matrices: MatrixDict,
+        ) -> tuple[list[html.Li], dl.DashLatex]:
+            def smart_format(value):
+                return ("%.5f" % value).rstrip("0").rstrip(".")
+
+            new_list: list[str] = []
+            for mat_name, ((x1, y1), (x2, y2)) in stored_matrices.items():
+                current_matrix = (
+                    r"""\( %s = \begin{bmatrix} %s & %s \\ %s & %s \end{bmatrix} \)"""
+                    % (
+                        mat_name,
+                        smart_format(x1),
+                        smart_format(y1),
+                        smart_format(x2),
+                        smart_format(y2),
+                    )
+                )
+                current_matrix = current_matrix.strip()
+                new_list.append(current_matrix)
+            matrix_list: list[html.Li] = [
+                html.Li(
+                    className="matrix-sect__matrix-list__item",
+                    children=dl.DashLatex(mat_latex),
+                )
+                for mat_latex in new_list
+            ]
+            latest_matrix = new_list[-1] if len(new_list) else ""
+            return matrix_list, dl.DashLatex(latest_matrix)
+
+        @self.app.callback(
+            Output("log-sect__list", "children", allow_duplicate=True),
+            [Input("output-logs", "data")],
+            prevent_initial_call=True,
+        )
+        def update_output_logs_diplay(
+            output_logs: list[str],
+        ) -> list[html.Li] | _callback.NoUpdate:
+            def create_log_span(log: str, repetition_count: int) -> html.Span:
+                return html.Span(
+                    children=[
+                        log,
+                        html.Span(
+                            className="log-repetition-count",
+                            children=(
+                                f" [×{repetition_count + 1}]"
+                                if repetition_count > 0
+                                else ""
+                            ),
+                        ),
+                    ]
+                )
+
+            logs_to_be_displayed: list[html.Span] = []
+            try:
+                previous_log = output_logs[0]
+            except IndexError:
+                print(
+                    "Warning: Output logs was updated but there are no logs to display. "
+                    "This is usually harmless."
+                )
+                raise PreventUpdate
+            stack_repeat_count = 0
+            for log in output_logs[1:]:
+                if log == previous_log:
+                    stack_repeat_count += 1
+                    continue
+                logs_to_be_displayed.append(
+                    create_log_span(previous_log, stack_repeat_count)
+                )
+                previous_log = log
+                stack_repeat_count = 0
+            if previous_log is not None:
+                logs_to_be_displayed.append(
+                    create_log_span(previous_log, stack_repeat_count)
+                )
+
+            return [
+                html.Li(className="log-sect__list__log", children=log)
+                for log in logs_to_be_displayed
+            ]
+
+    @staticmethod
+    def calculate_longest_vector_mag(vectors: Vectors) -> Number:
+        magnitude_of_longest_vector: Number = -float("inf")
+        for (vector_coords), _ in vectors.values():
+            vector_mag = np.linalg.norm(np.array(vector_coords))
+            magnitude_of_longest_vector = max(
+                magnitude_of_longest_vector, float(vector_mag)
+            )
+        return magnitude_of_longest_vector
 
     @staticmethod
     def apply_matrix_to_vectors(matrix: Matrix, vectors: Vectors) -> Vectors:
