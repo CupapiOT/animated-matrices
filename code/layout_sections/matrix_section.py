@@ -52,6 +52,7 @@ def create_matrix_section() -> html.Section:
                 ab_id="matrix-sect__a-b",
                 cd_id="matrix-sect__c-d",
                 inputs=[
+                    # TODO: Refactor name of matrix entries to be more descriptive.
                     dcc.Input(
                         id={
                             "type": "interactable",
@@ -59,16 +60,7 @@ def create_matrix_section() -> html.Section:
                         },
                         className="interactable",
                         type="number",
-                        placeholder="a",
-                    ),
-                    dcc.Input(
-                        id={
-                            "type": "interactable",
-                            "name": "matrix-entry-2",
-                        },
-                        className="interactable",
-                        type="number",
-                        placeholder="b",
+                        placeholder="x_1",
                     ),
                     dcc.Input(
                         id={
@@ -77,7 +69,16 @@ def create_matrix_section() -> html.Section:
                         },
                         className="interactable",
                         type="number",
-                        placeholder="c",
+                        placeholder="y_1",
+                    ),
+                    dcc.Input(
+                        id={
+                            "type": "interactable",
+                            "name": "matrix-entry-2",
+                        },
+                        className="interactable",
+                        type="number",
+                        placeholder="x_2",
                     ),
                     dcc.Input(
                         id={
@@ -86,7 +87,7 @@ def create_matrix_section() -> html.Section:
                         },
                         className="interactable",
                         type="number",
-                        placeholder="d",
+                        placeholder="y_2",
                     ),
                 ],
             ),
