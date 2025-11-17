@@ -396,7 +396,7 @@ class MatrixTransformationsApp:
         )
         def animate_graph(
             _,  # Ignore `n_intervals` of animation-interval
-            undo_mode: dict[str, bool],
+            undo_mode: bool,
             animation_steps: list[Matrix],
             previous_vectors: list[Vectors],
             stored_vectors: Vectors,
@@ -406,24 +406,22 @@ class MatrixTransformationsApp:
                 return (
                     no_update,
                     True,
-                    {"is_undo": False, "has_inverse": True},
+                    False,
                     no_update,
                 )
 
-            def _get_stored_vectors_pre_undo():
+            if undo_mode:
+                vectors_to_animate = stored_vectors
                 last_undone_matrix_name = list(undone_matrices.keys())[-1]
                 last_undone_matrix = undone_matrices[last_undone_matrix_name]
-                return self.apply_matrix_to_vectors(last_undone_matrix, stored_vectors)
-
-            if undo_mode["is_undo"]:
-                if undo_mode["has_inverse"]:
-                    vectors_to_animate = _get_stored_vectors_pre_undo()
-                    last_frame_vectors = stored_vectors
-                else:
-                    vectors_to_animate = stored_vectors
-                    last_frame_vectors = _get_stored_vectors_pre_undo()
+                last_frame_vectors = self.apply_matrix_to_vectors(
+                    last_undone_matrix, stored_vectors
+                )
             else:
-                vectors_to_animate = previous_vectors[-1]
+                try:
+                    vectors_to_animate = previous_vectors[-1]
+                except IndexError:
+                    vectors_to_animate = self.BASIS_VECTORS
                 last_frame_vectors = stored_vectors
 
             current_frame = animation_steps[0]
@@ -671,21 +669,17 @@ class MatrixTransformationsApp:
 
             restored_vectors = new_previous_vectors.pop()
 
-            if inverse_matrix is not None:
-                new_steps = update_animations(
-                    animation_steps=animation_steps.copy(),
-                    end_matrix=inverse_matrix,
-                )
-                animations_disabled = False
-                undo_mode = {"is_undo": True, "has_inverse": True}
-            else:
-                new_steps = update_animations(
-                    animation_steps=animation_steps.copy(),
-                    start_matrix=last_matrix,
-                    end_matrix=self.identity,
-                )
-                animations_disabled = False
-                undo_mode = {"is_undo": True, "has_inverse": False}
+            # This lets us play the last animation backwards without manually
+            # reversing the animation_steps. Playing said animation backwards
+            # also ignores any quirks that might happen with uninvertible
+            # matrices.
+            new_steps = update_animations(
+                animation_steps=animation_steps.copy(),
+                start_matrix=last_matrix,
+                end_matrix=self.identity,
+            )
+            animations_disabled = False
+            undo_mode = True
 
             new_output_logs = no_update
             if output_log_updates is not None:
