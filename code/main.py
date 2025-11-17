@@ -379,40 +379,64 @@ class MatrixTransformationsApp:
 
         @self.app.callback(
             Output("graph", "figure", allow_duplicate=True),
-            Output("animation-interval", "disabled"),
-            Output("animation-steps", "data"),
+            Output("animation-interval", "disabled", allow_duplicate=True),
+            Output("animation-undo-mode", "data", allow_duplicate=True),
+            Output("animation-steps", "data", allow_duplicate=True),
             [
                 Input("animation-interval", "n_intervals"),
+                State("animation-undo-mode", "data"),
                 State("animation-steps", "data"),
             ],
-            [State("previous-vector-store", "data"), State("vector-store", "data")],
+            [
+                State("previous-vector-store", "data"),
+                State("vector-store", "data"),
+                State("undone-matrices-store", "data"),
+            ],
             prevent_initial_call=True,
         )
         def animate_graph(
-            _,
+            _,  # Ignore `n_intervals` of animation-interval
+            undo_mode: bool,
             animation_steps: list[Matrix],
             previous_vectors: list[Vectors],
             stored_vectors: Vectors,
+            undone_matrices: MatrixDict,
         ) -> tuple:
             if not animation_steps:
-                return no_update, True, no_update
+                return (
+                    no_update,
+                    True,
+                    False,
+                    no_update,
+                )
 
-            vectors_to_animate = previous_vectors[-1]
+            if undo_mode:
+                vectors_to_animate = stored_vectors
+                last_undone_matrix_name = list(undone_matrices.keys())[-1]
+                last_undone_matrix = undone_matrices[last_undone_matrix_name]
+                last_frame_vectors = self.apply_matrix_to_vectors(
+                    last_undone_matrix, stored_vectors
+                )
+            else:
+                try:
+                    vectors_to_animate = previous_vectors[-1]
+                except IndexError:
+                    vectors_to_animate = self.BASIS_VECTORS
+                last_frame_vectors = stored_vectors
+
             current_frame = animation_steps[0]
             interpolated_vectors = self.apply_matrix_to_vectors(
                 current_frame, vectors_to_animate
             )
 
             # Get the appropriate scale of the graph.
-            # TODO: Finish this based on the final scale of every vector.
-            first_frame_vectors = vectors_to_animate
-            first_frame_mag = self.calculate_longest_vector_mag(first_frame_vectors)
-            last_frame_vectors = stored_vectors
+            first_frame_mag = self.calculate_longest_vector_mag(vectors_to_animate)
             last_frame_mag = self.calculate_longest_vector_mag(last_frame_vectors)
             graph_scale = max(first_frame_mag, last_frame_mag) * 1.1
 
             return (
                 create_figure(vectors=interpolated_vectors, scale=graph_scale),
+                no_update,
                 no_update,
                 animation_steps[1:] if animation_steps else [],
             )
@@ -586,10 +610,13 @@ class MatrixTransformationsApp:
 
         @self.app.callback(
             Output("matrix-store", "data", allow_duplicate=True),
-            Output("graph", "figure", allow_duplicate=True),
+            # Output("graph", "figure", allow_duplicate=True),
             Output("vector-store", "data", allow_duplicate=True),
             Output("previous-vector-store", "data", allow_duplicate=True),
             Output("undone-matrices-store", "data", allow_duplicate=True),
+            Output("animation-interval", "disabled", allow_duplicate=True),
+            Output("animation-undo-mode", "data", allow_duplicate=True),
+            Output("animation-steps", "data", allow_duplicate=True),
             Output("output-logs", "data", allow_duplicate=True),
             [
                 Input(
@@ -603,6 +630,9 @@ class MatrixTransformationsApp:
                 State("undone-matrices-store", "data"),
                 State("output-logs", "data"),
             ],
+            [
+                State("animation-steps", "data"),
+            ],
             prevent_initial_call=True,
         )
         def undo_matrix(
@@ -612,10 +642,11 @@ class MatrixTransformationsApp:
             previous_vectors: list[Vectors],
             undone_matrices: MatrixDict,
             output_logs: list[str],
+            animation_steps: list[Matrix],
         ) -> tuple:
             if not stored_matrices:
                 output_logs.append("Undo Matrix: No matrices exist.")
-                return (no_update,) * 5 + (output_logs,)
+                return (no_update,) * 7 + (output_logs,)
 
             new_stored_matrices = stored_matrices.copy()
             new_stored_vectors = stored_vectors.copy()
@@ -638,19 +669,31 @@ class MatrixTransformationsApp:
 
             restored_vectors = new_previous_vectors.pop()
 
+            # This lets us play the last animation backwards without manually
+            # reversing the animation_steps. Playing said animation backwards
+            # also ignores any quirks that might happen with uninvertible
+            # matrices.
+            new_steps = update_animations(
+                animation_steps=animation_steps.copy(),
+                start_matrix=last_matrix,
+                end_matrix=self.identity,
+            )
+            animations_disabled = False
+            undo_mode = True
+
+            new_output_logs = no_update
             if output_log_updates is not None:
-                output_logs.append(output_log_updates)
+                new_output_logs = output_logs + [output_log_updates]
 
             return (
                 new_stored_matrices,
-                create_figure(
-                    vectors=restored_vectors,
-                    scale=self.calculate_longest_vector_mag(restored_vectors) * 1.1,
-                ),
                 restored_vectors,
                 new_previous_vectors,
                 new_undone_matrices,
-                output_logs if output_log_updates is not None else no_update,
+                animations_disabled,
+                undo_mode,
+                new_steps,
+                new_output_logs,
             )
 
         @self.app.callback(
