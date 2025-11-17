@@ -15,7 +15,7 @@ def create_graph_section(app) -> html.Section:
             dcc.Store(id="animation-steps", data=[]),
             dcc.Store(
                 id="animation-undo-mode",
-                data=False,
+                data={"is_undo": False, "has_inverse": True},
             ),
             dcc.Graph(
                 id="graph",
