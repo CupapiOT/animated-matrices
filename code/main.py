@@ -410,17 +410,21 @@ class MatrixTransformationsApp:
                     no_update,
                 )
 
+            def _get_stored_vectors_pre_undo():
+                last_undone_matrix_name = list(undone_matrices.keys())[-1]
+                last_undone_matrix = undone_matrices[last_undone_matrix_name]
+                return self.apply_matrix_to_vectors(last_undone_matrix, stored_vectors)
+
             if undo_mode["is_undo"]:
                 if undo_mode["has_inverse"]:
-                    last_undone_matrix_name = list(undone_matrices.keys())[-1]
-                    last_undone_matrix = undone_matrices[last_undone_matrix_name]
-                    vectors_to_animate = self.apply_matrix_to_vectors(
-                        last_undone_matrix, stored_vectors
-                    )
+                    vectors_to_animate = _get_stored_vectors_pre_undo()
+                    last_frame_vectors = stored_vectors
                 else:
                     vectors_to_animate = stored_vectors
+                    last_frame_vectors = _get_stored_vectors_pre_undo()
             else:
                 vectors_to_animate = previous_vectors[-1]
+                last_frame_vectors = stored_vectors
 
             current_frame = animation_steps[0]
             interpolated_vectors = self.apply_matrix_to_vectors(
@@ -428,9 +432,7 @@ class MatrixTransformationsApp:
             )
 
             # Get the appropriate scale of the graph.
-            first_frame_vectors = vectors_to_animate
-            first_frame_mag = self.calculate_longest_vector_mag(first_frame_vectors)
-            last_frame_vectors = stored_vectors
+            first_frame_mag = self.calculate_longest_vector_mag(vectors_to_animate)
             last_frame_mag = self.calculate_longest_vector_mag(last_frame_vectors)
             graph_scale = max(first_frame_mag, last_frame_mag) * 1.1
 
