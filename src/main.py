@@ -7,7 +7,7 @@ from dash.dependencies import Input, Output, State
 import re
 from src.config.animation_settings import AnimationSettings
 from src.config.constants import *
-from src.create_figures import create_figure
+from src.graph_functions.create_figures import create_figure
 from src.types import *
 from src.matrix_utils import safe_inverse
 from src.general_utils import set_nonetype_to_zero
