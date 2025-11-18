@@ -9,7 +9,7 @@ def create_graph_section(app) -> html.Section:
             dcc.Interval(
                 id="animation-interval",
                 disabled=True,
-                interval=app.interval_ms,
+                interval=app.animation_settings.interval_ms,
                 n_intervals=0,
             ),
             dcc.Store(id="animation-steps", data=[]),

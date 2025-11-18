@@ -1,6 +1,6 @@
 from dash import html
 import dash_bootstrap_components as dbc
-from src.constants import *
+from src.config.constants import *
 from src.project_types import *
 from src.tabs.vector import create_vector_section
 from src.tabs.matrix import create_matrix_section

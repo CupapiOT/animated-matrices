@@ -5,7 +5,8 @@ import dash_bootstrap_components as dbc
 import dash_latex as dl
 from dash.dependencies import Input, Output, State
 import re
-from src.constants import *
+from src.config.animation_settings import AnimationSettings
+from src.config.constants import *
 from src.create_figures import create_figure
 from src.project_types import *
 from src.matrix_utils import safe_inverse
@@ -26,14 +27,7 @@ class MatrixTransformationsApp:
         # Potentially able to change this later, for different coordinate systems.
         self.identity: np.ndarray = np.identity(2)
 
-        # Animation timing; implementable via dcc.store in the future.
-        FRAMES_PER_SECOND: int = 12
-        TIME_FOR_ANIMATION_MS: int = 1000
-        self.animation_frames_count: int = FRAMES_PER_SECOND * (
-            TIME_FOR_ANIMATION_MS // 1000
-        )
-        interval_ms = TIME_FOR_ANIMATION_MS / self.animation_frames_count
-        self.interval_ms = max(int(interval_ms), 1)  # Always at least 1ms
+        self.animation_settings = AnimationSettings()
 
         self.app.layout = create_layout(self)
         self._register_callbacks()
@@ -265,7 +259,7 @@ class MatrixTransformationsApp:
         def create_frames(
             end_matrix: np.ndarray,
             start_matrix: np.ndarray = self.identity,
-            steps: int = self.animation_frames_count,
+            steps: int = self.animation_settings.frames_count,
         ) -> list[Matrix]:
             """
             Creates interpolation frames from one matrix to another.
@@ -300,7 +294,7 @@ class MatrixTransformationsApp:
             animation_steps: list[Matrix],
             end_matrix: np.ndarray,
             start_matrix: np.ndarray = self.identity,
-            steps: int = self.animation_frames_count,
+            steps: int = self.animation_settings.frames_count,
         ) -> list[Matrix]:
             """Returns animation_steps + new_frames."""
             frames = create_frames(
