@@ -1,10 +1,10 @@
-from numpy import ndarray
 from numpy.linalg import inv, LinAlgError
+from src.types import Matrix
 
 __all__ = ["safe_inverse"]
 
 
-def safe_inverse(matrix: ndarray) -> ndarray | None:
+def safe_inverse(matrix: Matrix) -> Matrix | None:
     """
     Returns the inverse of the matrix if it exists, otherwise returns
     None.
