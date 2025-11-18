@@ -20,7 +20,7 @@ def create_logs_section() -> html.Section:
                         title="Logs",
                     )
                 ],
-                start_collapsed=True
+                start_collapsed=True,
             ),
         ],
     )

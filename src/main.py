@@ -5,12 +5,12 @@ import dash_bootstrap_components as dbc
 import dash_latex as dl
 from dash.dependencies import Input, Output, State
 import re
-from constants import *
-from create_figures import create_figure
-from project_types import *
-from matrix_utils import safe_inverse
-from general_utils import set_nonetype_to_zero
-from layout import create_layout
+from src.constants import *
+from src.create_figures import create_figure
+from src.project_types import *
+from src.matrix_utils import safe_inverse
+from src.general_utils import set_nonetype_to_zero
+from src.layout import create_layout
 
 
 class MatrixTransformationsApp:

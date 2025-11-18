@@ -1,11 +1,11 @@
-from dash import dcc, html
-from constants import *
+from dash import html
 import dash_bootstrap_components as dbc
-from project_types import *
-from layout_sections.vector_section import create_vector_section
-from layout_sections.matrix_section import create_matrix_section
-from layout_sections.logs_section import create_logs_section
-from layout_sections.graph_section import create_graph_section
+from src.constants import *
+from src.project_types import *
+from src.tabs.vector import create_vector_section
+from src.tabs.matrix import create_matrix_section
+from src.components.logs_panel import create_logs_section
+from src.components.graph import create_graph_section
 
 
 def create_layout(app) -> html.Main:

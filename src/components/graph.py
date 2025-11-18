@@ -1,5 +1,5 @@
 from dash import dcc, html
-from create_figures import create_2d_basis_vectors
+from src.create_figures import create_2d_basis_vectors
 
 
 def create_graph_section(app) -> html.Section:
