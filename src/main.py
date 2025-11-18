@@ -11,7 +11,11 @@ from src.graph_functions.create_figures import create_figure
 from src.types import *
 from src.utils.general_utils import set_nonetype_to_zero
 from src.utils.matrix_operations import safe_inverse
-from src.layout import create_layout
+import dash_bootstrap_components as dbc
+from src.tabs.vector import create_vector_section
+from src.tabs.matrix import create_matrix_section
+from src.components.logs_panel import create_logs_section
+from src.components.graph import create_graph_section
 
 
 class MatrixTransformationsApp:
@@ -29,8 +33,31 @@ class MatrixTransformationsApp:
 
         self.animation_settings = AnimationSettings()
 
-        self.app.layout = create_layout(self)
+        self.app.layout = self._create_layout()
         self._register_callbacks()
+
+    def _create_layout(self) -> html.Main:
+        vector_tab = dbc.Card(dbc.CardBody(create_vector_section(self)))
+        matrix_tab = dbc.Card(dbc.CardBody(create_matrix_section()))
+        return html.Main(
+            [
+                html.H1("2D Matrix Visualizer", className="visually-hidden"),
+                create_graph_section(self),
+                dbc.Tabs(
+                    [
+                        dbc.Tab(
+                            matrix_tab, label="Matrices", tab_id="matrix-section-tab"
+                        ),
+                        dbc.Tab(
+                            vector_tab, label="Vectors", tab_id="vector-section-tab"
+                        ),
+                    ],
+                    id="section-tabs",
+                    active_tab="matrix-section-tab",
+                ),
+                create_logs_section(),
+            ],
+        )
 
     def _handle_newly_added_vectors(
         self,
