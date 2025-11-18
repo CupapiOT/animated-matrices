@@ -1,7 +1,7 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 from src.config.constants import *
-from src.project_types import *
+from src.types import *
 from src.components.matrix_inputs import input_matrix
 
 
