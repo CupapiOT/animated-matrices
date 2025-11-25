@@ -1,6 +1,8 @@
+from src.types import Number
+
 def set_nonetype_to_zero(
-    *values: int | float | None,
-) -> tuple | list:
+    *values: Number | None,
+) -> list:
     """
     Takes any number of int-type or float-type values and filters them,
     setting each value to 0 if it is a NoneType.
