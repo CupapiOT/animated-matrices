@@ -9,7 +9,7 @@ def create_vector_section(app) -> html.Section:
     return html.Section(
         id="vector-sect",
         children=[
-            dcc.Store(id="vector-store", data={**app.BASIS_VECTORS}),
+            dcc.Store(id="vector-store", data={**app.basis_vectors}),
             input_matrix(
                 id="vector-sect__coordinates",
                 inputs=[

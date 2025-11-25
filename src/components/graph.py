@@ -19,7 +19,7 @@ def create_graph_section(app) -> html.Section:
             ),
             dcc.Graph(
                 id="graph",
-                figure=create_2d_basis_vectors(app.BASIS_VECTORS),
+                figure=create_2d_basis_vectors(app.basis_vectors),
             ),
         ],
     )
