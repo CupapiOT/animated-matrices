@@ -1,13 +1,15 @@
 import numpy as np
-from src.types import Matrix, MatrixDict, Vectors, Number
+from dash import no_update
 from dash.dependencies import Input, Output, State
+from src.types import Matrix, MatrixDict, Vectors, Number
 from src.utils.matrix import (
     apply_matrix_to_vectors,
+    generate_new_matrix_name,
+    generate_duplicate_matrix_name,
+    generate_inverse_matrix_name,
+    is_inverse_matrix,
     safe_inverse,
 )
-from src.config.constants import UPPER_LETTERS
-from dash import no_update
-from src.utils.matrix import generate_unique_matrix_name
 from src.utils.general import set_nonetype_to_zero
 
 
@@ -48,9 +50,7 @@ def register_matrix_callbacks(app_instance):
         Output("animation-interval", "disabled", allow_duplicate=True),
         Output("animation-steps", "data", allow_duplicate=True),
         [
-            Input(
-                {"type": "interactable", "name": "add-matrix-button"}, "n_clicks"
-            ),
+            Input({"type": "interactable", "name": "add-matrix-button"}, "n_clicks"),
             State({"type": "interactable", "name": "matrix-entry-1"}, "value"),
             State({"type": "interactable", "name": "matrix-entry-2"}, "value"),
             State({"type": "interactable", "name": "matrix-entry-3"}, "value"),
@@ -60,15 +60,13 @@ def register_matrix_callbacks(app_instance):
             State("matrix-store", "data"),
             State("vector-store", "data"),
             State("previous-vector-store", "data"),
-            State(
-                {"type": "interactable", "name": "new-matrix-entry-name"}, "value"
-            ),
+            State({"type": "interactable", "name": "new-matrix-entry-name"}, "value"),
         ],
         [State("animation-steps", "data")],
         prevent_initial_call=True,
     )
     def add_matrix(
-        n_clicks: int,
+        _: int,
         a: Number,
         b: Number,
         c: Number,
@@ -82,16 +80,16 @@ def register_matrix_callbacks(app_instance):
         a, b, c, d = set_nonetype_to_zero(a, b, c, d)
 
         matrix = np.array([[a, b], [c, d]])
-        matrix_name = name if name else UPPER_LETTERS[n_clicks % 26 - 1]
+        matrix_name = (
+            name if name else generate_new_matrix_name(list(stored_matrices.keys()))
+        )
 
         stored_matrices[matrix_name] = matrix.tolist()
 
         previous_vectors.append(stored_vectors.copy())
 
         most_recent_matrix = np.array(list(stored_matrices.values())[-1])
-        new_vectors = apply_matrix_to_vectors(
-            most_recent_matrix, stored_vectors
-        )
+        new_vectors = apply_matrix_to_vectors(most_recent_matrix, stored_vectors)
 
         new_steps = app_instance.update_animations(
             animation_steps=animation_steps.copy(), end_matrix=most_recent_matrix
@@ -162,7 +160,9 @@ def register_matrix_callbacks(app_instance):
 
         def _get_last_matrix_name(stored_matrices_: MatrixDict) -> str:
             non_inverse_matrices = [
-                key for key in stored_matrices_.keys() if not key.startswith("I_")
+                matrix_name
+                for matrix_name in stored_matrices_.keys()
+                if not is_inverse_matrix(matrix_name)
             ]
             return (
                 non_inverse_matrices[-1]
@@ -190,23 +190,15 @@ def register_matrix_callbacks(app_instance):
             new_output_logs.append(f"Matrix '{name}' does not have an inverse.")
             return (no_update,) * 6 + (new_output_logs,)
 
-        inverse_name = "I_{" + name + "}"
-        # TODO: Create better name handling appropriate for math expressions.
-        # if "^{-1}" in name:
-        #     inverse_name = "(" + name + ")^{-1}"
-        # else:
-        #     inverse_name = name + r"^{-1}"
-        new_name = generate_unique_matrix_name(
-            name=inverse_name, existing_names=stored_matrices
+        inverse_name = generate_inverse_matrix_name(
+            name=name, existing_names=list(stored_matrices.keys())
         )
 
-        stored_matrices[new_name] = inverted_matrix.tolist()
+        stored_matrices[inverse_name] = inverted_matrix.tolist()
         previous_vectors.append(stored_vectors.copy())
-        new_vectors = apply_matrix_to_vectors(
-            inverted_matrix, stored_vectors
-        )
+        new_vectors = apply_matrix_to_vectors(inverted_matrix, stored_vectors)
 
-        most_recent_matrix = np.array(stored_matrices[new_name])
+        most_recent_matrix = np.array(stored_matrices[inverse_name])
         new_steps = app_instance.update_animations(
             animation_steps=animation_steps, end_matrix=most_recent_matrix
         )
@@ -271,10 +263,8 @@ def register_matrix_callbacks(app_instance):
 
         # This is done so that it doesn't delete any vectors that were made
         # before the undoing.
-        new_previous_vectors, output_log_updates = (
-            _handle_newly_added_vectors(
-                new_stored_vectors, new_previous_vectors, inverse_matrix
-            )
+        new_previous_vectors, output_log_updates = _handle_newly_added_vectors(
+            new_stored_vectors, new_previous_vectors, inverse_matrix
         )
 
         new_undone_matrices[last_matrix_name] = new_stored_matrices.pop(
@@ -357,9 +347,7 @@ def register_matrix_callbacks(app_instance):
         previous_vectors.append(stored_vectors.copy())
 
         most_recent_matrix = np.array(stored_matrices[last_undone_matrix_name])
-        restored_vectors = apply_matrix_to_vectors(
-            most_recent_matrix, stored_vectors
-        )
+        restored_vectors = apply_matrix_to_vectors(most_recent_matrix, stored_vectors)
 
         new_steps = app_instance.update_animations(
             animation_steps=animation_steps.copy(), end_matrix=most_recent_matrix
@@ -434,7 +422,9 @@ def register_matrix_callbacks(app_instance):
         if not selected_matrix:
             selected_matrix = list(stored_matrices.keys())[-1]
 
-        new_name = generate_unique_matrix_name(selected_matrix, stored_matrices)
+        new_name = generate_duplicate_matrix_name(
+            selected_matrix, list(stored_matrices.keys())
+        )
 
         stored_matrices[new_name] = stored_matrices[selected_matrix]
         previous_vectors.append(stored_vectors.copy())
