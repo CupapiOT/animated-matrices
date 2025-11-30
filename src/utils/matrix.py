@@ -46,46 +46,53 @@ def generate_new_matrix_name(existing_names: list[str]) -> str:
     )
 
 
+DUPLICATE_MATRIX_REGEX = re.compile(r"_\{\d+\}$")
+
+
+def remove_duplicate_suffix(name: str) -> tuple[str, str]:
+    """
+    Returns the deduplicated base name of a matrix and the duplicate 
+    suffix.
+    """
+    deduplicated_match = re.match(r"(.*)(_\{\d+\})", name)
+    if deduplicated_match is not None:
+        return deduplicated_match.group(1), deduplicated_match.group(2)
+    return name, ""
+
+
 def generate_duplicate_matrix_name(name: str, existing_names: list[str]) -> str:
-    # A name is a duplicate if it ends in `_int`.
-    duplicate_name_suffix = re.compile(r"_\d+$")
-
-    def _remove_duplicate_suffix(base_name: str) -> str:
-        deduplicated_name = base_name
-        name_is_duplicate = re.search(duplicate_name_suffix, base_name) is not None
-        if name_is_duplicate:
-            deduplicated_match = re.match(r"^[^_]+", base_name)
-            if deduplicated_match is not None:
-                deduplicated_name = deduplicated_match.group()
-        return deduplicated_name
-
-    def _find_next_num_in_sequence(deduplicated_name, names):
-        existing_duplicates = [
-            name for name in names if name.startswith(deduplicated_name)
-        ]
-
-        number_list = []
-        for duplicate_name in existing_duplicates:
-            suffix = re.search(duplicate_name_suffix, duplicate_name)
-            if suffix:
-                number_list.append(int(suffix.group()[1:]))
-        number_list.sort()
-
-        try:
-            next_num = next(
-                (
-                    number_list[i] + 1
-                    for i in range(len(number_list) - 1)
-                    if number_list[i + 1] != number_list[i] + 1
-                ),
-                number_list[-1] + 1,
-            )
-        except IndexError:
-            next_num = 2
-        return next_num
-
     if name not in existing_names:
         return name
-    new_name = _remove_duplicate_suffix(name)
-    index_solution = _find_next_num_in_sequence(new_name, existing_names)
-    return new_name + f"_{index_solution}"
+
+    deduplicated_name, _ = remove_duplicate_suffix(name)
+
+    existing_duplicates = [
+        name for name in existing_names if name.startswith(deduplicated_name)
+    ]
+
+    suffix_numbers_list = []
+    for duplicate_name in existing_duplicates:
+        suffix = re.search(DUPLICATE_MATRIX_REGEX, duplicate_name)
+        if suffix:
+            suffix_number = re.search(r"\d+", suffix.group())
+            # Safe to ignore what is likely user error from incorrectly
+            # naming a matrix.
+            if suffix_number is None:
+                continue
+            suffix_numbers_list.append(int(suffix_number.group()))
+    suffix_numbers_list.sort()
+
+    breaks_in_sequence = (
+        num
+        for num, suffix_num in enumerate(suffix_numbers_list, start=2)
+        if num != suffix_num
+    )
+    try:
+        first_missing_number = next(
+            breaks_in_sequence,
+            suffix_numbers_list[-1] + 1,
+        )
+    except IndexError:
+        first_missing_number = 2
+
+    return f"{deduplicated_name}_{{{first_missing_number}}}"
