@@ -47,14 +47,22 @@ def generate_new_matrix_name(existing_names: list[str]) -> str:
 
 
 DUPLICATE_MATRIX_REGEX = re.compile(r"_\{\d+\}$")
+INVERSE_MATRIX_REGEX = re.compile(r"\^\{-1\}")
+
+
+def is_duplicate_matrix(name: str) -> bool:
+    return re.search(DUPLICATE_MATRIX_REGEX, name) is not None
+
+
+def is_inverse_matrix(name: str) -> bool:
+    return re.search(INVERSE_MATRIX_REGEX, name) is not None
 
 
 def remove_duplicate_suffix(name: str) -> tuple[str, str]:
     """
-    Returns the deduplicated base name of a matrix and the duplicate 
-    suffix.
+    Returns the base name of a matrix and its duplicate-matrix suffix.
     """
-    deduplicated_match = re.match(r"(.*)(_\{\d+\})", name)
+    deduplicated_match = re.match(rf"(.*)({DUPLICATE_MATRIX_REGEX.pattern})", name)
     if deduplicated_match is not None:
         return deduplicated_match.group(1), deduplicated_match.group(2)
     return name, ""
@@ -72,6 +80,12 @@ def generate_duplicate_matrix_name(name: str, existing_names: list[str]) -> str:
 
     suffix_numbers_list = []
     for duplicate_name in existing_duplicates:
+        # TODO: Replace with a generic `shares_base_name` function when
+        # transpose matrix are added--this will do for now.
+        if is_inverse_matrix(duplicate_name) and not is_inverse_matrix(
+            deduplicated_name
+        ):
+            continue
         suffix = re.search(DUPLICATE_MATRIX_REGEX, duplicate_name)
         if suffix:
             suffix_number = re.search(r"\d+", suffix.group())
@@ -96,3 +110,22 @@ def generate_duplicate_matrix_name(name: str, existing_names: list[str]) -> str:
         first_missing_number = 2
 
     return f"{deduplicated_name}_{{{first_missing_number}}}"
+
+
+def generate_inverse_matrix_name(name: str, existing_names: list[str]) -> str:
+    if not is_inverse_matrix(name):
+        deduplicated_name, duplicate_suffix = remove_duplicate_suffix(name)
+        return generate_duplicate_matrix_name(
+            f"{deduplicated_name}^{{-1}}{duplicate_suffix}", existing_names
+        )
+
+    deduplicated_name, duplicate_suffix = remove_duplicate_suffix(name)
+    inverted_suffix_match = re.match(
+        rf"(.*)({INVERSE_MATRIX_REGEX.pattern})", deduplicated_name
+    )
+    base_name = inverted_suffix_match.group(1)  # type: ignore
+    base_name_with_duplicate = base_name + duplicate_suffix
+
+    if base_name_with_duplicate not in existing_names:
+        return base_name_with_duplicate
+    return generate_duplicate_matrix_name(base_name_with_duplicate, existing_names)

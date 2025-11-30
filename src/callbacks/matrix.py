@@ -4,8 +4,10 @@ from dash.dependencies import Input, Output, State
 from src.types import Matrix, MatrixDict, Vectors, Number
 from src.utils.matrix import (
     apply_matrix_to_vectors,
-    generate_duplicate_matrix_name,
     generate_new_matrix_name,
+    generate_duplicate_matrix_name,
+    generate_inverse_matrix_name,
+    is_inverse_matrix,
     safe_inverse,
 )
 from src.utils.general import set_nonetype_to_zero
@@ -158,7 +160,9 @@ def register_matrix_callbacks(app_instance):
 
         def _get_last_matrix_name(stored_matrices_: MatrixDict) -> str:
             non_inverse_matrices = [
-                key for key in stored_matrices_.keys() if not key.startswith("I_")
+                matrix_name
+                for matrix_name in stored_matrices_.keys()
+                if not is_inverse_matrix(matrix_name)
             ]
             return (
                 non_inverse_matrices[-1]
@@ -186,21 +190,15 @@ def register_matrix_callbacks(app_instance):
             new_output_logs.append(f"Matrix '{name}' does not have an inverse.")
             return (no_update,) * 6 + (new_output_logs,)
 
-        inverse_name = "I_{" + name + "}"
-        # TODO: Create better name handling appropriate for math expressions.
-        # if "^{-1}" in name:
-        #     inverse_name = "(" + name + ")^{-1}"
-        # else:
-        #     inverse_name = name + r"^{-1}"
-        new_name = generate_duplicate_matrix_name(
-            name=inverse_name, existing_names=list(stored_matrices.keys())
+        inverse_name = generate_inverse_matrix_name(
+            name=name, existing_names=list(stored_matrices.keys())
         )
 
-        stored_matrices[new_name] = inverted_matrix.tolist()
+        stored_matrices[inverse_name] = inverted_matrix.tolist()
         previous_vectors.append(stored_vectors.copy())
         new_vectors = apply_matrix_to_vectors(inverted_matrix, stored_vectors)
 
-        most_recent_matrix = np.array(stored_matrices[new_name])
+        most_recent_matrix = np.array(stored_matrices[inverse_name])
         new_steps = app_instance.update_animations(
             animation_steps=animation_steps, end_matrix=most_recent_matrix
         )
