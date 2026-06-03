@@ -109,10 +109,12 @@ class MatrixTransformationsApp:
         return new_steps
 
 
+app = MatrixTransformationsApp({"i-hat": [(1, 0), "green"], "j-hat": [(0, 1), "red"]})
+
+server = app.app.server
+
+
 def main() -> None:
-    app = MatrixTransformationsApp(
-        {"i-hat": [(1, 0), "green"], "j-hat": [(0, 1), "red"]}
-    )
     app.app.run(debug=True)
 
 

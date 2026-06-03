@@ -103,10 +103,13 @@ def register_ui_callbacks(app_instance):
         try:
             previous_log = output_logs[0]
         except IndexError:
-            print(
-                "Warning: Output logs was updated but there are no logs to display. "
-                "This is usually harmless."
-            )
+            # I'm not sure what this print statement is supposed to tell
+            # developers, but it seems to just be noise when running the app,
+            # so it'll be commented out unless somehow proven useful.
+            # print(
+            #     "Warning: Output logs was updated but there are no logs to display. "
+            #     "This is usually harmless."
+            # )
             raise PreventUpdate
         stack_repeat_count = 0
         for log in output_logs[1:]:
