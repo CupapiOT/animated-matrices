@@ -15,7 +15,7 @@ from src.callbacks import register_all_callbacks
 class MatrixTransformationsApp:
     def __init__(self, basis_vectors):
         self.app = Dash(
-            title="Matrix Transformations",
+            title="Animated Matrices",
             external_stylesheets=[dbc.themes.BOOTSTRAP],
             meta_tags=META_TAGS,
         )

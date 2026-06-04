@@ -3,3 +3,4 @@ dash~=3.4.0
 plotly~=6.7.0
 dash-bootstrap-components~=2.0.4
 dash-latex~=0.1.1
+gunicorn~=26.0.0
