@@ -13,7 +13,7 @@ from src.callbacks import register_all_callbacks
 
 
 class MatrixTransformationsApp:
-    def __init__(self, basis_vectors):
+    def __init__(self, basis_vectors, animation_settings):
         self.app = Dash(
             title="Animated Matrices",
             external_stylesheets=[dbc.themes.BOOTSTRAP],
@@ -22,7 +22,7 @@ class MatrixTransformationsApp:
 
         self.identity = np.identity(2)
         self.basis_vectors = basis_vectors
-        self.animation_settings = AnimationSettings()
+        self.animation_settings = animation_settings
 
         self.app.layout = self._create_layout()
         register_all_callbacks(self)
@@ -65,23 +65,21 @@ class MatrixTransformationsApp:
         Returns:
         - A list of matrices containing the interpolated matrices.
 
-        IMPORTANT:
-          When generating animation frames, we interpolate from the identity matrix
+        Note:
+          When generating animation frames, interpolate from the identity matrix
           to the matrix being applied. This is because the animation applies each
-          intermediate matrix to the CURRENT positions of the vectors on the graph.
+          intermediate matrix to the current positions of the vectors on the graph.
 
           This means we must not interpolate from the last matrix applied.
           Doing so creates either:
           - a zero-difference (no animation if matrices are equal), or
           - unintended compound transformations (exponential growth when chaining).
-
-          Always interpolate from the intended identity matrix to the intended matrix.
         """
 
         if start_matrix is None:
             start_matrix = self.identity
         if steps is None:
-            steps = self.animation_settings.frames_count
+            steps: int = self.animation_settings.frames_count
 
         # The first frame is also returned for future compatibility for
         # exporting animations.
@@ -109,13 +107,32 @@ class MatrixTransformationsApp:
         return new_steps
 
 
-app = MatrixTransformationsApp({"i-hat": [(1, 0), "green"], "j-hat": [(0, 1), "red"]})
+BASIS_VECTORS = {"i-hat": [(1, 0), "green"], "j-hat": [(0, 1), "red"]}
+animation_settings = AnimationSettings()
+app = MatrixTransformationsApp(
+    BASIS_VECTORS,
+    animation_settings,
+)
 
 server = app.app.server
 
 
 def main() -> None:
-    app.app.run(debug=True)
+    animation_settings = AnimationSettings()
+    animation_settings.frames_per_second = 12
+    animation_settings.frames_count = animation_settings.frames_per_second * (
+        animation_settings.time_for_animation_ms // 1000
+    )
+    animation_settings.interval_ms = max(
+        animation_settings.time_for_animation_ms // animation_settings.frames_count,
+        1,
+    )
+    debugApp = MatrixTransformationsApp(
+        BASIS_VECTORS,
+        animation_settings,
+    )
+
+    debugApp.app.run(debug=True)
 
 
 if __name__ == "__main__":

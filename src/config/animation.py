@@ -3,8 +3,13 @@ Holds fixed settings for the timing of animations. May be implemented via
 dcc.Store elements or some other way in the future.
 """
 
+
 class AnimationSettings:
-    frames_per_second = 12
-    time_for_animation_ms = 1000
-    frames_count = frames_per_second * (time_for_animation_ms // 1000)
-    interval_ms = max(time_for_animation_ms // frames_count, 1)  # Always at least 1ms
+    def __init__(self) -> None:
+        self.frames_per_second = 8
+        self.time_for_animation_ms = 1000
+        self.frames_count = self.frames_per_second * (self.time_for_animation_ms // 1000)
+        self.interval_ms = 50
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
