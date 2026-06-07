@@ -108,7 +108,7 @@ class MatrixTransformationsApp:
 
 
 BASIS_VECTORS = {"i-hat": [(1, 0), "green"], "j-hat": [(0, 1), "red"]}
-animation_settings = AnimationSettings()
+animation_settings = AnimationSettings(frames_per_second=8)
 app = MatrixTransformationsApp(
     BASIS_VECTORS,
     animation_settings,
@@ -118,18 +118,10 @@ server = app.app.server
 
 
 def main() -> None:
-    animation_settings = AnimationSettings()
-    animation_settings.frames_per_second = 12
-    animation_settings.frames_count = animation_settings.frames_per_second * (
-        animation_settings.time_for_animation_ms // 1000
-    )
-    animation_settings.interval_ms = max(
-        animation_settings.time_for_animation_ms // animation_settings.frames_count,
-        1,
-    )
+    debug_animation_settings = AnimationSettings(frames_per_second=12)
     debugApp = MatrixTransformationsApp(
         BASIS_VECTORS,
-        animation_settings,
+        debug_animation_settings,
     )
 
     debugApp.app.run(debug=True)
